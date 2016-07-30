@@ -24,8 +24,8 @@
     "submit"
   ],
   "contributors": [
-      "Jake Pusateri <jacobp@zillow.com>",
-      "Steven Bierstiker <stevenb@zillow.com>"
+    "Jake Pusateri <jacobp@zillow.com>",
+    "Steven Bierstiker <stevenb@zillow.com>"
   ],
   "license": "MIT",
   "dependencies": {
@@ -46,6 +46,7 @@
     "mocha": "^2.3.4",
     "react": "^15.0.0",
     "redux": "^3.0.0",
+    "redux-thunk": "^2.1.0",
     "sinon": "^1.17.4"
   },
   "peerDependencies": {

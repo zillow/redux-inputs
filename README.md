@@ -1,5 +1,4 @@
 # redux-inputs
----
 
 `redux-inputs` works with redux to validate and store values from inputs and forms.
 It primarily consists of a redux reducer creator function and function to get
