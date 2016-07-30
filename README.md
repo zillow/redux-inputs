@@ -87,25 +87,46 @@ In your connected component, use the `getInputProps` function to get an object w
     }
 
 The following example uses React, though it is not strictly required.
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createInputsReducer, getInputProps } from 'redux-inputs';
+import { connect, Provider } from 'react-redux';
+import thunk = from 'redux-thunk';
 
-    import { connect } from 'react-redux';
+const inputConfig = { 
+	email: {
+		defaultValue: 'test@example.com',
+		validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
+	} 
+};
+const reducer = combineReducers({
+    inputs: createInputsReducer(inputConfig)
+});
+const store = createStore(reducer, applyMiddleware(thunk));
 
-    function Form(props) {
-        const { dispatch, inputs } = props;
-        const formInputs = getInputProps(inputConfig, inputs, dispatch);
-        const isError = formInputs.error !== undefined;
-        const value = isError ? formInputs.value : formInputs.error;
-        return (
-            <form className={isError ? 'error' : ''}>
-                <input id="email"
-                       value={formInputs.value}
-                       onChange={(e) => {
-                           dispatchChange({ email: { value: e.target.value } })
-                       }} />
-            </form>
-        )
-    }
-    const FormContainer = connect(state => state)(Form);
+function Form(props) {
+	  const { dispatch, inputs } = props;
+    const inputProps = getInputProps(inputConfig, inputs, dispatch);
+    const isEmailError = inputs.email.error;
+    return (
+        <form>
+            <input id="email"
+                   value={inputProps.email.value}
+                   onChange={(e) => {
+                       inputProps.email.dispatchChange({ email: e.target.value })
+                   }} />
+             { isEmailError? <p className="error">Your email must contain an @</p> : null}
+             <h3>Input state</h3>
+             <pre>{JSON.stringify(inputs, null, 2)}</pre>      
+        </form>
+    )
+}
+const FormContainer = connect(s => s)(Form);
+ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
+```
+[Interactive Demo](https://jsfiddle.net/jakepusateri/4sfkp9j7/5/)
 
 The object passed to dispatchChange can have any number of key-value pairs in it.
 
@@ -133,7 +154,7 @@ To facilitate using redux-inputs with React, a higher order component `ReduxInpu
 #### Arguments
 - `WrappedComponent` *(Component)*
 - `options` *(Object)*
-- - `onChangeTransform` *(Function)* [optional] Turn a browser change event into a value. (e.g. e => e.target.value for `input`)
+- - `onChangeTransform` *(Function)* [optional] Turn a browser change event into a value. (e.g. `e => e.target.value` for `input`)
 
 
 ## Other Actions Creators
