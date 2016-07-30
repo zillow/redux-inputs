@@ -12,7 +12,8 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "prepublish": "gulp",
+    "prepublish": "gulp && npm run build-umd",
+    "build-umd": "webpack -p lib/index.js lib/redux-inputs.playground.js",
     "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests"
   },
   "keywords": [
@@ -47,7 +48,8 @@
     "react": "^15.0.0",
     "redux": "^3.0.0",
     "redux-thunk": "^2.1.0",
-    "sinon": "^1.17.4"
+    "sinon": "^1.17.4",
+    "webpack": "^1.13.1"
   },
   "peerDependencies": {
     "redux": "^3.0.0",
