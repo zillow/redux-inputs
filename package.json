@@ -1,0 +1,58 @@
+{
+  "name": "redux-inputs",
+  "version": "1.0.0",
+  "description": "Redux actions and reducers for managing and validating forms and inputs",
+  "homepage": "https://github.com/zillow/redux-inputs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zillow/redux-inputs"
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "scripts": {
+    "prepublish": "gulp",
+    "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests"
+  },
+  "keywords": [
+    "react",
+    "redux",
+    "form",
+    "inputs",
+    "validation",
+    "submit"
+  ],
+  "contributors": [
+      "Jake Pusateri <jacobp@zillow.com>",
+      "Steven Bierstiker <stevenb@zillow.com>"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "invariant": "^2.2.0",
+    "lodash": "^4.5.1",
+    "react-display-name": "^0.2.0"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-object-rest-spread": "^6.3.13",
+    "babel-plugin-transform-runtime": "^6.6.0",
+    "babel-preset-es2015": "^6.0.15",
+    "babel-preset-react": "^6.5.0",
+    "babel-register": "^6.3.13",
+    "chai": "^3.4.1",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.1",
+    "gulp-eslint": "^1.1.1",
+    "mocha": "^2.3.4",
+    "react": "^15.0.0",
+    "redux": "^3.0.0",
+    "sinon": "^1.17.4"
+  },
+  "peerDependencies": {
+    "redux": "^3.0.0",
+    "redux-thunk": "^2.0.0"
+  },
+  "optionalDependencies": {
+    "react": "^0.14.0 || ^15.0.0-0"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "extends": "eslint:recommended",
+  "env": {
+    "browser": true,
+    "node": true,
+    "jasmine": true,
+    "es6": true
+  },
+  "ecmaFeatures": {
+    "modules": true,
+    "jsx": true,
+    "experimentalObjectRestSpread": true
+  },
+  "rules": {
+    "arrow-body-style": [1, "as-needed"],
+    "quotes": [1, "single", "avoid-escape"], // Single quotes preferred
+    "strict": [1, "global"],
+    "space-before-function-paren": [1, {"anonymous": "always", "named": "never"}],
+    "camelcase": [1, {"properties": "never"}],
+    "no-console": 0,
+    "no-undef": 1, // TODO temporary
+    "no-eq-null": 1,
+    "no-floating-decimal": 1,
+    "no-param-reassign": 1,
+    "no-self-compare": 1,
+    "wrap-iife": 1,
+    "indent": [0, 4], // TODO discuss
+    "brace-style": [2, "1tbs", {"allowSingleLine": true}]
+  }
+}
