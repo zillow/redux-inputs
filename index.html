@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Redux-inputs by zillow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Redux-inputs</h1>
+      <h2 class="project-tagline">redux-inputs is a Javascript library that works with redux to validate and store values from inputs and forms.</h2>
+      <a href="https://github.com/zillow/redux-inputs" class="btn">View on GitHub</a>
+      <a href="https://github.com/zillow/redux-inputs/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/zillow/redux-inputs/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="redux-inputs" class="anchor" href="#redux-inputs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>redux-inputs</h1>
+
+<p><a href="https://badge.fury.io/js/redux-inputs"><img src="https://badge.fury.io/js/redux-inputs.svg" alt="npm version"></a> 
+<a href="https://travis-ci.org/zillow/redux-inputs"><img src="https://travis-ci.org/zillow/redux-inputs.svg?branch=master" alt="Build Status"></a></p>
+
+<p><code>redux-inputs</code> works with redux to validate and store values from inputs and forms.
+It primarily consists of a redux reducer creator function and function to get
+ a set of properties to be used by input components.
+Both the reducer and input props creator take a inputConfig object that defines how inputs
+ are initialized and validated.</p>
+
+<h3>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Example</h3>
+
+<pre><code>const inputConfig = {
+    homePrice: {
+        defaultValue: 300000,
+        validator: (value) =&gt; value &gt; 0 &amp;&amp; value &lt; 350000000
+    }
+}
+</code></pre>
+
+<p><a href="INPUTCONFIG.md"><em>View the <code>inputConfig</code> API here</em></a></p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
+
+<p><code>npm install --save redux-inputs</code></p>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting Started</h2>
+
+<p>To set up redux-inputs, there are three steps:</p>
+
+<h3>
+<a id="step-1" class="anchor" href="#step-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Step 1</h3>
+
+<p>Add <a href="https://github.com/gaearon/redux-thunk">redux-thunk</a> middleware to your store,
+ following instructions at that repo.</p>
+
+<h3>
+<a id="step-2" class="anchor" href="#step-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Step 2</h3>
+
+<p>Create an input configuration object and add a redux-inputs reducer to your redux
+ store in your project's reducers file.</p>
+
+<pre><code>import { combineReducers } from 'redux';
+import { createInputsReducer } from 'redux-inputs';
+
+const inputConfig = { email: {} };
+const reducer = combineReducers({
+    inputs: createInputsReducer(inputConfig)
+});
+</code></pre>
+
+<p>Note that <code>inputs</code> is the default mount point for redux-inputs state. You can
+ configure this in your <code>inputConfig</code> object.</p>
+
+<pre><code>inputConfig = {
+    _form: {
+        reduxMountPoint: 'loginModal.userInputs'
+    }
+    ... other inputs config ...
+}
+</code></pre>
+
+<p>In this example your state would look like this:</p>
+
+<pre><code>{
+    loginModal: {
+        userInputs: { ... }
+    }
+}
+</code></pre>
+
+<h3>
+<a id="step-3---provide-props-to-input-components" class="anchor" href="#step-3---provide-props-to-input-components" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Step 3 - Provide props to input components</h3>
+
+<p>The standard state format for an input in redux looks like this:</p>
+
+<pre><code>inputs: {
+    email: {
+        value: 'test@test.com',
+        error: '244535'
+    }
+}
+</code></pre>
+
+<p>This represents a form with one input where the user first typed '<a href="mailto:test@test.com">test@test.com</a>',
+ but changed it to '244535', which is invalid. This state is what you get when you
+ use redux connect into your component.</p>
+
+<p>In your connected component, use the <code>getInputProps</code> function to get an object with
+ the following shape:
+    {
+        value: The last valid state the input had.
+        error: The state of the input if invalid, undefined otherwise. Should be displayed as value if present.
+        dispatchChange: A function to call on input changes to update the store
+    }</p>
+
+<p>The following example uses React, though it is not strictly required.</p>
+
+<div class="highlight highlight-source-js-jsx"><pre><span class="pl-k">import</span><span class="pl-smi"> React from</span> '<span class="pl-smi">react</span>';
+<span class="pl-smi">import ReactDOM from</span> '<span class="pl-smi">react</span>-<span class="pl-smi">dom</span>';
+<span class="pl-smi">import</span> {<span class="pl-smi"> createStore</span>,<span class="pl-smi"> combineReducers</span>,<span class="pl-smi"> applyMiddleware</span> }<span class="pl-smi"> from</span> '<span class="pl-smi">redux</span>';
+<span class="pl-smi">import</span> {<span class="pl-smi"> createInputsReducer</span>,<span class="pl-smi"> getInputProps</span> }<span class="pl-smi"> from</span> '<span class="pl-smi">redux</span>-<span class="pl-smi">inputs</span>';
+<span class="pl-smi">import</span> {<span class="pl-smi"> connect</span>,<span class="pl-smi"> Provider</span> }<span class="pl-smi"> from</span> '<span class="pl-smi">react</span>-<span class="pl-smi">redux</span>';
+<span class="pl-smi">import thunk</span> =<span class="pl-smi"> from</span> '<span class="pl-smi">redux</span>-<span class="pl-smi">thunk</span>';
+
+<span class="pl-smi">const inputConfig</span> = { 
+<span class="pl-smi">    email</span>: {
+<span class="pl-smi">        defaultValue</span>: <span class="pl-s"><span class="pl-pds">'</span>test@example.com<span class="pl-pds">'</span></span>,
+<span class="pl-smi">        validator</span>: (<span class="pl-smi">value</span>) =&gt;<span class="pl-smi"> typeof value</span> === <span class="pl-s"><span class="pl-pds">'</span>string<span class="pl-pds">'</span></span> &amp;&amp;<span class="pl-smi"> value</span>.<span class="pl-smi">indexOf</span>(<span class="pl-s"><span class="pl-pds">'</span>@<span class="pl-pds">'</span></span>) &gt;= 0
+    } 
+};
+<span class="pl-smi">const reducer</span> =<span class="pl-smi"> combineReducers</span>({
+<span class="pl-smi">    inputs</span>:<span class="pl-smi"> createInputsReducer</span>(<span class="pl-smi">inputConfig</span>)
+});
+<span class="pl-smi">const store</span> =<span class="pl-smi"> createStore</span>(<span class="pl-smi">reducer</span>,<span class="pl-smi"> applyMiddleware</span>(<span class="pl-smi">thunk</span>));
+
+<span class="pl-smi">function Form</span>(<span class="pl-smi">props</span>) {
+<span class="pl-smi">      const</span> {<span class="pl-smi"> dispatch</span>,<span class="pl-smi"> inputs</span> } =<span class="pl-smi"> props</span>;
+<span class="pl-smi">    const inputProps</span> =<span class="pl-smi"> getInputProps</span>(<span class="pl-smi">inputConfig</span>,<span class="pl-smi"> inputs</span>,<span class="pl-smi"> dispatch</span>);
+<span class="pl-smi">    const isEmailError</span> =<span class="pl-smi"> inputs</span>.<span class="pl-smi">email</span>.<span class="pl-smi">error</span>;
+<span class="pl-smi">    return</span> (
+        &lt;<span class="pl-smi">form</span>&gt;
+            &lt;<span class="pl-smi">input id</span>=<span class="pl-s"><span class="pl-pds">"</span>email<span class="pl-pds">"</span></span>
+<span class="pl-smi">                   value</span>={<span class="pl-smi">inputProps</span>.<span class="pl-smi">email</span>.<span class="pl-smi">value</span>}
+<span class="pl-smi">                   onChange</span>={(<span class="pl-smi">e</span>) =&gt; {
+<span class="pl-smi">                       inputProps</span>.<span class="pl-smi">email</span>.<span class="pl-smi">dispatchChange</span>({<span class="pl-smi"> email</span>:<span class="pl-smi"> e</span>.<span class="pl-smi">target</span>.<span class="pl-smi">value</span> })
+                   }} /&gt;
+             {<span class="pl-smi"> isEmailError</span>? &lt;<span class="pl-smi">p className</span>=<span class="pl-s"><span class="pl-pds">"</span>error<span class="pl-pds">"</span></span>&gt;<span class="pl-smi">Your email must contain an</span> @&lt;/<span class="pl-smi">p</span>&gt; :<span class="pl-smi"> null</span>}
+             &lt;<span class="pl-smi">h3</span>&gt;<span class="pl-smi">Input state</span>&lt;/<span class="pl-smi">h3</span>&gt;
+             &lt;<span class="pl-smi">pre</span>&gt;{<span class="pl-c1">JSON</span>.<span class="pl-smi">stringify</span>(<span class="pl-smi">inputs</span>,<span class="pl-smi"> null</span>, 2)}&lt;/<span class="pl-smi">pre</span>&gt;      
+        &lt;/<span class="pl-smi">form</span>&gt;
+    )
+}
+<span class="pl-smi">const FormContainer</span> =<span class="pl-smi"> connect</span>(<span class="pl-smi">s</span> =&gt;<span class="pl-smi"> s</span>)(<span class="pl-smi">Form</span>);
+<span class="pl-smi">ReactDOM</span><span class="pl-k">.</span><span class="pl-smi">render</span>(&lt;<span class="pl-smi">Provider store</span>={<span class="pl-smi">store</span>}&gt;&lt;<span class="pl-smi">FormContainer</span> /&gt;&lt;/<span class="pl-smi">Provider</span>&gt;,<span class="pl-smi"> document</span>.<span class="pl-smi">getElementById</span>('<span class="pl-smi">container</span>'));</pre></div>
+
+<p><a href="https://jsfiddle.net/jakepusateri/4sfkp9j7/5/">Interactive Demo</a></p>
+
+<p>The object passed to dispatchChange can have any number of key-value pairs in it.</p>
+
+<p><code>dispatchChange</code> also returns a promise for when async validation runs and you want to handle the result after it's done.</p>
+
+<p>With this set up, you are able make changes to inputs and have them declaratively
+ validated and state synchronized with your store. Because this could send actions
+ to your store every keystroke, you probably want to use something like a
+ <a href="http://khan.github.io/react-components/#blur-input">BlurInput</a>.</p>
+
+<p>By keeping these two redux-inputs functions flexible, it is easy to have multiple
+ forms by making multiple inputConfigs. You can also make dynamic forms by
+ dynamically creating input configs, replacing reducers, and creating dynamic components.</p>
+
+<h2>
+<a id="components-in-react" class="anchor" href="#components-in-react" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Components in React</h2>
+
+<h3>
+<a id="reduxinputswrapper" class="anchor" href="#reduxinputswrapper" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>ReduxInputsWrapper</code>
+</h3>
+
+<p>To facilitate using redux-inputs with React, a higher order component <code>ReduxInputsWrapper</code>
+ is provided that adds additional props to the wrapped component:</p>
+
+<ul>
+<li>
+<code>parser</code>: Function to turn a value from a 'change' event into a logical value to be stored</li>
+<li>
+<code>formatter</code>: Function to create a DOM-appropriate string from a value</li>
+<li>
+<code>resolve</code>: Function that will be called after value changes have been set in the store</li>
+<li>
+<code>reject</code>: Function that will be called if value changes fail validation</li>
+</ul>
+
+<h4>
+<a id="arguments" class="anchor" href="#arguments" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Arguments</h4>
+
+<ul>
+<li>
+<code>WrappedComponent</code> <em>(Component)</em>
+</li>
+<li>
+<code>options</code> <em>(Object)</em>
+</li>
+<li>- <code>onChangeTransform</code> <em>(Function)</em> [optional] Turn a browser change event into a value. (e.g. <code>e =&gt; e.target.value</code> for <code>input</code>)</li>
+</ul>
+
+<h2>
+<a id="other-actions-creators" class="anchor" href="#other-actions-creators" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Other Actions Creators</h2>
+
+<h3>
+<a id="setinputsinputconfig-change" class="anchor" href="#setinputsinputconfig-change" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>setInputs(inputConfig, change)</code>
+</h3>
+
+<p>Creates an action that sets inputs state directly without validation.</p>
+
+<h4>
+<a id="arguments-1" class="anchor" href="#arguments-1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Arguments</h4>
+
+<ul>
+<li>
+<code>inputConfig</code> <em>(Object)</em>
+</li>
+<li>
+<code>change</code> <em>(Object)</em>
+</li>
+</ul>
+
+<p>Example change:</p>
+
+<pre><code>{
+    email: {
+        value: 'test@test.com'
+        error: '1234'
+    },
+    name: {
+        value: 'larry'
+    }
+}
+</code></pre>
+
+<h3>
+<a id="validateinputsinputconfig-inputkeys" class="anchor" href="#validateinputsinputconfig-inputkeys" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>validateInputs(inputConfig, ?inputKeys)</code>
+</h3>
+
+<p>A thunk that returns a Promise which resolves if all inputs are valid, rejects if one or more inputs are invalid.
+Triggers errors on inputs.
+resolve function is passed the input states of inputs that were validated
+reject function is passed the input states of inputs that are invalid</p>
+
+<h4>
+<a id="arguments-2" class="anchor" href="#arguments-2" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Arguments</h4>
+
+<ul>
+<li>
+<code>inputConfig</code> <em>(Object)</em>
+</li>
+<li>
+<code>inputKeys</code> <em>(Array)</em> [optional] Array of input keys found in inputConfig. If no inputKeys are given, validates all inputs found in inputConfig.</li>
+</ul>
+
+<h3>
+<a id="resetinputsinputconfig" class="anchor" href="#resetinputsinputconfig" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><code>resetInputs(inputConfig)</code>
+</h3>
+
+<p>Returns an action that when dispatched will reset the form values associated with the given inputConfig to their default values.</p>
+
+<h2>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contributing</h2>
+
+<h3>
+<a id="build" class="anchor" href="#build" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build</h3>
+
+<pre><code>gulp
+</code></pre>
+
+<h3>
+<a id="tests" class="anchor" href="#tests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tests</h3>
+
+<pre><code>npm test
+</code></pre>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/zillow/redux-inputs">Redux-inputs</a> is maintained by <a href="https://github.com/zillow">zillow</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
