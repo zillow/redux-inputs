@@ -22,7 +22,7 @@
       <h1>
 <a id="redux-inputs" class="anchor" href="#redux-inputs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>redux-inputs</h1>
 
-<p><a href="https://badge.fury.io/js/redux-inputs"><img src="https://badge.fury.io/js/redux-inputs.svg" alt="npm version"></a> 
+<p><a href="https://badge.fury.io/js/redux-inputs"><img src="https://badge.fury.io/js/redux-inputs.svg" alt="npm version"></a>
 <a href="https://travis-ci.org/zillow/redux-inputs"><img src="https://travis-ci.org/zillow/redux-inputs.svg?branch=master" alt="Build Status"></a></p>
 
 <p><code>redux-inputs</code> works with redux to validate and store values from inputs and forms.
@@ -129,11 +129,11 @@ const reducer = combineReducers({
 <span class="pl-smi">import</span> {<span class="pl-smi"> connect</span>,<span class="pl-smi"> Provider</span> }<span class="pl-smi"> from</span> '<span class="pl-smi">react</span>-<span class="pl-smi">redux</span>';
 <span class="pl-smi">import thunk</span> =<span class="pl-smi"> from</span> '<span class="pl-smi">redux</span>-<span class="pl-smi">thunk</span>';
 
-<span class="pl-smi">const inputConfig</span> = { 
+<span class="pl-smi">const inputConfig</span> = {
 <span class="pl-smi">    email</span>: {
 <span class="pl-smi">        defaultValue</span>: <span class="pl-s"><span class="pl-pds">'</span>test@example.com<span class="pl-pds">'</span></span>,
 <span class="pl-smi">        validator</span>: (<span class="pl-smi">value</span>) =&gt;<span class="pl-smi"> typeof value</span> === <span class="pl-s"><span class="pl-pds">'</span>string<span class="pl-pds">'</span></span> &amp;&amp;<span class="pl-smi"> value</span>.<span class="pl-smi">indexOf</span>(<span class="pl-s"><span class="pl-pds">'</span>@<span class="pl-pds">'</span></span>) &gt;= 0
-    } 
+    }
 };
 <span class="pl-smi">const reducer</span> =<span class="pl-smi"> combineReducers</span>({
 <span class="pl-smi">    inputs</span>:<span class="pl-smi"> createInputsReducer</span>(<span class="pl-smi">inputConfig</span>)
@@ -160,7 +160,7 @@ const reducer = combineReducers({
 <span class="pl-smi">const FormContainer</span> =<span class="pl-smi"> connect</span>(<span class="pl-smi">s</span> =&gt;<span class="pl-smi"> s</span>)(<span class="pl-smi">Form</span>);
 <span class="pl-smi">ReactDOM</span><span class="pl-k">.</span><span class="pl-smi">render</span>(&lt;<span class="pl-smi">Provider store</span>={<span class="pl-smi">store</span>}&gt;&lt;<span class="pl-smi">FormContainer</span> /&gt;&lt;/<span class="pl-smi">Provider</span>&gt;,<span class="pl-smi"> document</span>.<span class="pl-smi">getElementById</span>('<span class="pl-smi">container</span>'));</pre></div>
 
-<p><a href="https://jsfiddle.net/jakepusateri/4sfkp9j7/5/">Interactive Demo</a></p>
+<p><a href="./examples.html">Interactive Demo</a></p>
 
 <p>The object passed to dispatchChange can have any number of key-value pairs in it.</p>
 
