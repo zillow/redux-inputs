@@ -1,5 +1,5 @@
 # redux-inputs
-[![npm version](https://badge.fury.io/js/redux-inputs.svg)](https://badge.fury.io/js/redux-inputs) 
+[![npm version](https://badge.fury.io/js/redux-inputs.svg)](https://badge.fury.io/js/redux-inputs)
 [![Build Status](https://travis-ci.org/zillow/redux-inputs.svg?branch=master)](https://travis-ci.org/zillow/redux-inputs)
 
 `redux-inputs` works with redux to validate and store values from inputs and forms.
@@ -95,11 +95,11 @@ import { createInputsReducer, getInputProps } from 'redux-inputs';
 import { connect, Provider } from 'react-redux';
 import thunk = from 'redux-thunk';
 
-const inputConfig = { 
+const inputConfig = {
 	email: {
 		defaultValue: 'test@example.com',
 		validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
-	} 
+	}
 };
 const reducer = combineReducers({
     inputs: createInputsReducer(inputConfig)
@@ -126,7 +126,7 @@ function Form(props) {
 const FormContainer = connect(s => s)(Form);
 ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
 ```
-[Interactive Demo](https://jsfiddle.net/jakepusateri/4sfkp9j7/5/)
+[Interactive Demo](./examples.html)
 
 The object passed to dispatchChange can have any number of key-value pairs in it.
 
