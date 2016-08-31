@@ -25,17 +25,29 @@ Both the reducer and input props creator take a inputConfig object that defines 
 
 ## Getting Started
 
-To set up redux-inputs, there are three steps:
-
-### Step 1
+### Step 1 - Prerequisites
 
 Add [redux-thunk](https://github.com/gaearon/redux-thunk) middleware to your store,
  following instructions at that repo.
 
-### Step 2
+### Step 2 - Config
 
-Create an input configuration object and add a redux-inputs reducer to your redux
- store in your project's reducers file.
+Create an input configuration object and add a redux-inputs reducer to your redux store in your project's reducers file.
+
+[*View the `inputConfig` properties here*](INPUTCONFIG.md)
+
+Create your inputsConfig object
+
+    const inputsConfig = {
+        email: {
+            validator: (input) => input && input.length > 3
+        }
+    };
+    
+    
+### Step 3 - Reducer
+
+Give redux-inputs reducer to Redux in your project's reducers file.
 
     import { combineReducers } from 'redux';
     import { createInputsReducer } from 'redux-inputs';
@@ -45,25 +57,64 @@ Create an input configuration object and add a redux-inputs reducer to your redu
         inputs: createInputsReducer(inputConfig)
     });
 
-Note that `inputs` is the default mount point for redux-inputs state. You can
- configure this in your `inputConfig` object.
+### Step 4 - Connect
 
-    inputConfig = {
-        _form: {
-            reduxMountPoint: 'loginModal.userInputs'
-        }
-        ... other inputs config ...
+    import { connectWithInputs } from 'redux-inputs';
+    
+    YourForm = connectWithInputs(inputConfig)()(YourForm);
+    
+Connect your form with `connectWithInputs`, which takes the `inputConfig` and creates a function that has the same 
+interface as react-redux's `connect`. This will pass down additional props to your component including `inputProps`.
+
+### Step 5 - Wrapper
+
+import { InputsWrapper } from 'redux-inputs';
+ 
+Higher order component that wraps input components and wires them up to the state. This allows all types of inputs to 
+conform to the same API, and be easily understood and swapped out.
+
+#### Arguments
+- `WrappedComponent` *(Component)*
+- `options` *(Object)*
+- - `onChangeTransform` *(Function)* [optional] Turn a browser change event into a value. (e.g. `e => e.target.value` for `input`)
+
+#### Props that must be implemented in wrapped component
+
+- id *(string)*: unique id for this input, can be used to link label and input
+- value: represents the current value as defined by the input's state
+- error *(boolean)*: True if the current value is invalid
+- onChange *(function)*: Takes one parameter - the new value
+
+#### Props added to composed component
+
+- parser *(function)*
+- formatter *(function)*
+
+
+    let Input = ({id, value, error, onChange}) => (
+        <div>
+            <input name={id} onChange={(e) => onChange(e.target.value)}/>
+            {error ? <div>Invalid input</div> : null} 
+        </div>
+    );
+    Input = InputsWrapper(Input);
+    
+The `InputsWrapper` looks at the state and turns it into `value`, and `error` props, where `value` is equal to 
+`inputs.email.value` if `inputs.email.error` is undefined, or `inputs.email.error` otherwise. The `InputsWrapper` 
+passes down any other properties of the input state untouched.
+Then this input can be used in the render of connected `YourForm` like this:
+    
+    render() {
+        const { email } = this.props.inputProps;
+        
+        return (
+            <Input {...email}/>
+        );
     }
+    
+Changes from this input will be validated and dispatched, then passed back through component update.
 
-In this example your state would look like this:
-
-    {
-        loginModal: {
-            userInputs: { ... }
-        }
-    }
-
-### Step 3 - Provide props to input components
+## Redux state shape
 
 The standard state format for an input in redux looks like this:
 
@@ -76,98 +127,91 @@ The standard state format for an input in redux looks like this:
 
 This represents a form with one input where the user first typed 'test@test.com',
  but changed it to '244535', which is invalid. This state is what you get when you
- use redux connect into your component.
-
-In your connected component, use the `getInputProps` function to get an object with
- the following shape:
-    {
-        value: The last valid state the input had.
-        error: The state of the input if invalid, undefined otherwise. Should be displayed as value if present.
-        dispatchChange: A function to call on input changes to update the store
-    }
-
-The following example uses React, though it is not strictly required.
+ use redux connect into your component, it is called the `inputState` and can be described as:
+ 
+     {
+         value: The last valid state the input had.
+         error: The state of the input if invalid, undefined otherwise. Should be displayed as value if present.
+     }
+     
+## Single File Example
 ```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import { createInputsReducer, getInputProps } from 'redux-inputs';
-import { connect, Provider } from 'react-redux';
+import { createInputsReducer, connectWithInputs } from 'redux-inputs';
+import { Provider } from 'react-redux';
 import thunk = from 'redux-thunk';
 
 const inputConfig = {
-	email: {
-		defaultValue: 'test@example.com',
-		validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
-	}
+    email: {
+        defaultValue: 'test@example.com',
+        validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
+    }
 };
 const reducer = combineReducers({
     inputs: createInputsReducer(inputConfig)
 });
 const store = createStore(reducer, applyMiddleware(thunk));
 
+let EmailInput = ({id, value, error, onChange}) => (
+    <div>
+        <input name={id} onChange={(e) => onChange(e.target.value)}/>
+        {error ? <div>Your email must contain an @</div> : null} 
+    </div>
+);
+EmailInput = InputsWrapper(EmailInput);
+
 function Form(props) {
-	  const { dispatch, inputs } = props;
-    const inputProps = getInputProps(inputConfig, inputs, dispatch);
-    const isEmailError = inputs.email.error;
+    const { dispatch, inputs, inputProps } = props;
     return (
         <form>
-            <input id="email"
-                   value={inputProps.email.value}
-                   onChange={(e) => {
-                       inputProps.email.dispatchChange({ email: e.target.value })
-                   }} />
-             { isEmailError? <p className="error">Your email must contain an @</p> : null}
-             <h3>Input state</h3>
-             <pre>{JSON.stringify(inputs, null, 2)}</pre>      
+            <EmailInput {...inputProps.email}/>
+            <h3>Input state</h3>
+            <pre>{JSON.stringify(inputs, null, 2)}</pre>      
         </form>
     )
 }
-const FormContainer = connect(s => s)(Form);
-ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
+const ConnectedForm = connectWithInputs(inputConfig)(s => s)(Form);
+ReactDOM.render(<Provider store={store}><ConnectedForm /></Provider>, document.getElementById('container'));
 ```
+
+
 [Interactive Demo](./examples.html)
-
-The object passed to dispatchChange can have any number of key-value pairs in it.
-
-`dispatchChange` also returns a promise for when async validation runs and you want to handle the result after it's done.
 
 With this set up, you are able make changes to inputs and have them declaratively
  validated and state synchronized with your store. Because this could send actions
  to your store every keystroke, you probably want to use something like a
  [BlurInput](http://khan.github.io/react-components/#blur-input).
 
-By keeping these two redux-inputs functions flexible, it is easy to have multiple
- forms by making multiple inputConfigs. You can also make dynamic forms by
- dynamically creating input configs, replacing reducers, and creating dynamic components.
+## Action Creators/Thunks
+ 
+### `updateInputs(inputConfig, change)`
 
-## Components in React
-### `ReduxInputsWrapper`
-To facilitate using redux-inputs with React, a higher order component `ReduxInputsWrapper`
- is provided that adds additional props to the wrapped component:
-
- - `parser`: Function to turn a value from a 'change' event into a logical value to be stored
- - `formatter`: Function to create a DOM-appropriate string from a value
- - `resolve`: Function that will be called after value changes have been set in the store
- - `reject`: Function that will be called if value changes fail validation
+Thunk that validates change and dispatches `setInputs` to update inputs changed. Returns a Promise where the 
+resolve function is passed the input states of inputs that were validated and the 
+reject function is passed the input states of inputs that are invalid
 
 #### Arguments
-- `WrappedComponent` *(Component)*
-- `options` *(Object)*
-- - `onChangeTransform` *(Function)* [optional] Turn a browser change event into a value. (e.g. `e => e.target.value` for `input`)
+- `inputConfig` *(Object)*
+- `change` *(Object)* key-value pairs of input key and new value to be validated and set if valid.
 
+Example change
 
-## Other Actions Creators
+    {
+        email: 'test@test.com',
+        name: 'larry'
+    }
 
-### `setInputs(inputConfig, change)`
+### `setInputs(inputConfig, newInputState)`
 
 Creates an action that sets inputs state directly without validation.
 
 #### Arguments
 - `inputConfig` *(Object)*
-- `change` *(Object)*
+- `newInputState` *(Object)*
 
-Example change:
+Example newInputState:
 
     {
         email: {
@@ -181,7 +225,7 @@ Example change:
 
 ### `validateInputs(inputConfig, ?inputKeys)`
 
-A thunk that returns a Promise which resolves if all inputs are valid, rejects if one or more inputs are invalid.
+Thunk that returns a Promise which resolves if all inputs are valid, rejects if one or more inputs are invalid.
 Triggers errors on inputs.
 resolve function is passed the input states of inputs that were validated
 reject function is passed the input states of inputs that are invalid

@@ -2,19 +2,10 @@
 
 ## Example
 
-    let inputConfig = {
+    const inputConfig = {
         email: {
             defaultValue: '',
-            validator: (value) => typeof value === 'string' && value.length > 0,
-
-            // Must return a promise
-            // Any errors in the async validation should be handled here
-            asyncValidator: (value) => new Promise(resolve) {
-                ... async stuff ...
-
-                // Resolve if valid, reject if invalid
-                resolve();
-            }
+            validator: (value) => typeof value === 'string' && value.length > 0
         }
     };
 
@@ -22,21 +13,26 @@ This inputConfig defines a single email input with a defaultValue, validator, an
 
 ## API
 
-### `defaultValue` *(Any)* The value your inputs will start out with.
+### `defaultValue` *(Any)* The value your input will start out with. 
 
-### `validator(value, inputsState, state)`
-
-Function for performing client side validation
-
-#### Arguments
+### `validator(value, inputsState, state, dispatch)`
+ 
+Function for performing validation
+ 
+#### Passed arguments
 1. `value` *(Any)* The value of the input being validated
 2. `inputsState` *(Object)* The current state of your inputs
 3. `state` *(Object)* The state of the entire redux store
+4. `dispatch` *(Function)* dispatch function from the redux store, for dispatching side-effect actions
 
-#### Returns
-*(Boolean)*|*(Object)*: If boolean, true for valid, false for invalid. If object, represents the new state of the input.
-This can be used to add error information to the input state, such as setting errorText.
-
+#### Must return one of the following:
+- *(Boolean)*: true for valid, false for invalid.
+- *(Object)* `newInputState` : represents the new state of the input. This can be used to add error information to the input state, such as setting errorText.
+- *(Promise)*: a promise for performing async validation. Resolves if valid, rejects if invalid
+    - `resolve` *(Function)*
+    - `reject` *(Function)*
+        - Optionally, either callback can be passed *(Object)* `newInputState`  to  return the new input state object to set the input to. This is useful for adding error information to the input state.
+        
 #### Example
 
     inputConfig: {
@@ -50,44 +46,31 @@ This can be used to add error information to the input state, such as setting er
                     value < inputsState.homeValue.value
             }
         },
-    }
-
-### `asyncValidator(value, inputsState, state, dispatch)`
-
-Similar to validator, but for doing asynchronous validation. Is only called if client-side validation passes.
-
-#### Arguments
-1. `value` *(Any)* The value of the input being validated
-2. `inputsState` *(Object)* The current state of your inputs
-3. `state` *(Object)* The state of the entire redux store
-4. `dispatch` *(Function)* dispatch function from the redux store, for dispatching side-effect actions
-
-#### Returns
-- *(Promise)*: Resolves if valid, rejects if invalid.
-    - `resolve` *(Function)*
-    - `reject` *(Function)*
-        - `newInputState` *(Object)* Optionally return the new input state object to set the input to. This is useful for adding error information to the input state.
-
-#### Example
-
-    inputConfig: {
         zipCode: {
-            asyncValidator: (value) => new Promise((resolve, reject) => {
-                asyncValidateZIPCode((error) => {
-                    if (error) {
-                        if (error === 'Unsupported') {
-                            reject({
-                                error: value,
-                                errorType: 'Unsupported' // Extra information stored on input state to be used in view
-                            });
+            validator: (value) => {
+                // Client-side validation
+                if (!value || value.length < 5 || value.length > 5) {
+                    return false;
+                }
+                
+                // Async validation
+                return new Promise((resolve, reject) => {
+                    asyncValidateZIPCode((error) => {
+                        if (error) {
+                            if (error === 'Unsupported') {
+                                reject({
+                                    error: value,
+                                    errorType: 'Unsupported' // Extra information stored on input state to be used in view
+                                });
+                            } else {
+                                reject(); // Generic error
+                            }
                         } else {
-                            reject();
+                            resolve(); // Validation passed
                         }
-                    } else {
-                        resolve();
-                    }
+                    })
                 })
-            })
+            }
         }
     }
 
@@ -96,4 +79,20 @@ Similar to validator, but for doing asynchronous validation. Is only called if c
 You may set a `_form` property at the root of `inputConfig` to change some form-wide settings
 
 #### `reduxMountPoint` *(String)* change the key used to store redux-inputs state in the store. Defaults to `inputs`. If the input state is stored deeply in the state tree, this `can.be.dot.separated`.
+
+    inputConfig = {
+        _form: {
+            reduxMountPoint: 'tab1.inputs'
+        }
+        ... other inputs config ...
+    }
+    
+In this example your state would look like this:
+
+    {
+        tab1: {
+            inputs: {}
+        }
+    }
+    
 #### `metaCreator` *(Function)* is passed the action object whenever an action is created. Can be used to add meta information to a dispatched action. This can be useful for integrating with [redux-analytics](https://github.com/markdalgleish/redux-analytics).

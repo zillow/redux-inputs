@@ -45,7 +45,7 @@ export function getInputProps(inputConfig, inputsState, dispatch) {
         }
 
         return {
-            _id: id,
+            _id: id, // TODO make this id more flexible for multiple forms
             value: hasError ? error : value,
             error: hasError,
             dispatchChange: (change) => dispatch(onChange(change)),
