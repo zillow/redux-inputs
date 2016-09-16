@@ -6,7 +6,7 @@ import _keys from 'lodash/keys';
 import _property from 'lodash/property';
 import invariant from 'invariant';
 
-import { SET_INPUT, LOADING } from './actionTypes';
+import { SET_INPUT, VALIDATING } from './actionTypes';
 import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
 import log from '../util/log';
 import { getDefaultInputs } from '../reducers';
@@ -43,13 +43,13 @@ function _clientSideValidate(inputConfig, inputs, state) {
             if (newInputState) {  // True returned, input valid
                 result[key] = {
                     value: value,
-                    loading: !!asyncValidator // Now loading if async validator exists
+                    validating: !!asyncValidator // Now validating if async validator exists
                 };
             } else { // False returned, input invalid
                 result[key] = {
                     value: prev,
                     error: value || '',
-                    loading: false // Not going to run async validator if invalid
+                    validating: false // Not going to run async validator if invalid
                 };
             }
         } else if (newInputStateType === 'object') { // Object returned, set input to it
@@ -117,14 +117,14 @@ function _asyncValidate(inputConfig, inputs, state, dispatch) {
     });
 
     if (hasAsync) {
-        dispatch(loading(inputConfig, true));
+        dispatch(validating(inputConfig, true));
     }
 
     return new Promise((resolve, reject) => {
         Promise.all(promises).then((results) => {
             let finalResults = _reduce(results, (result, value) => _assign(result, value), {});
             if (hasAsync) {
-                dispatch(loading(inputConfig, false));
+                dispatch(validating(inputConfig, false));
             }
             const erroredInputs = _haveErrors(finalResults);
             if (erroredInputs) {
@@ -161,9 +161,9 @@ function _createActionWithMeta(inputConfig, action) {
     };
 }
 
-export function loading(inputConfig, force) {
+export function validating(inputConfig, force) {
     return _createActionWithMeta(inputConfig, {
-        type: LOADING,
+        type: VALIDATING,
         payload: force
     });
 }

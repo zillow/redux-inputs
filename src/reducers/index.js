@@ -5,7 +5,7 @@ import invariant from 'invariant';
 
 import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
 
-import { SET_INPUT, LOADING } from '../actions/actionTypes';
+import { SET_INPUT, VALIDATING } from '../actions/actionTypes';
 
 function getDefaultInputState(config) {
     return { value: config.defaultValue };
@@ -56,12 +56,12 @@ export function createInputsReducer(inputConfig) {
                         ...state,
                         ...action.payload
                     };
-                case LOADING:
+                case VALIDATING:
                     return {
                         ...state,
                         [FORM_KEY]: {
                             ...state[FORM_KEY],
-                            loading: action.payload
+                            validating: action.payload
                         }
                     };
             }
