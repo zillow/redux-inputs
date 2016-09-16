@@ -83,12 +83,14 @@ conform to the same API, and be easily understood and swapped out.
 - id *(string)*: unique id for this input, can be used to link label and input
 - value: represents the current value as defined by the input's state
 - error *(boolean)*: True if the current value is invalid
+- errorText *(string)*
 - onChange *(function)*: Takes one parameter - the new value
 
 #### Props added to composed component
 
 - parser *(function)*
 - formatter *(function)*
+- errorFormatter ?
 
 
     let Input = ({id, value, error, onChange}) => (
@@ -113,6 +115,12 @@ Then this input can be used in the render of connected `YourForm` like this:
     }
     
 Changes from this input will be validated and dispatched, then passed back through component update.
+
+## Form state
+
+ - formValidating *(boolean)*
+ - formPristine *(boolean)*
+ - formHasError *(boolean)*
 
 ## Redux state shape
 
@@ -149,6 +157,7 @@ const inputConfig = {
         validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
     }
 };
+// If you have multiple inputConfigs, they share this one reducer
 const reducer = combineReducers({
     inputs: createInputsReducer(inputConfig)
 });
@@ -172,7 +181,10 @@ function Form(props) {
         </form>
     )
 }
-const ConnectedForm = connectWithInputs(inputConfig)(s => s)(Form);
+const ConnectedForm = connectWithInputs({
+    mountPoint: 'inputs'
+    inputConfig
+})(s => s)(Form);
 ReactDOM.render(<Provider store={store}><ConnectedForm /></Provider>, document.getElementById('container'));
 ```
 
@@ -247,3 +259,6 @@ Returns an action that when dispatched will reset the form values associated wit
 ### Tests
 
     npm test
+
+
+TODO: document exported action types

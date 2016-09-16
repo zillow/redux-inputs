@@ -4,8 +4,8 @@ import React from 'react';
 import { createInputsReducer } from '../src';
 import { SET_INPUT, LOADING } from '../src/actions/actionTypes';
 import { setInput, loading, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
-import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, createOnChangeWithTransform } from '../src/util/helpers';
-import ReduxInputsWrapper from '../src/util/ReduxInputsWrapper';
+import { DEFAULT_REDUX_MOUNT_POINT, getInputProps } from '../src/util/helpers';
+import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
 describe('createInputsReducer', () => {
     describe('no input config', () => {
@@ -230,36 +230,6 @@ describe('setInput action creator', () => {
             meta: { reduxMountPoint: 'alternate' }
         });
     });
-    it('should add additional meta data using metaCreator in inputConfig', () => {
-        let action = setInput({
-            _form: {
-                metaCreator: (action) => ({
-                    analytics: {
-                        type: 'analytics-event',
-                        payload: {
-                            type: action.type
-                        }
-                    }
-                })
-            }
-        }, {
-            email: { value: 'test@test.com' }
-        });
-        expect(action).to.deep.equal({
-            type: SET_INPUT,
-            payload: { email: { value: 'test@test.com' } },
-            error: false,
-            meta: {
-                analytics: {
-                    type: 'analytics-event',
-                    payload: {
-                        type: SET_INPUT
-                    }
-                },
-                reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT
-            }
-        });
-    });
 });
 
 describe('resetInputs action creator', () => {
@@ -462,7 +432,7 @@ describe('getInputProps', () => {
     const errorTextState = { email: { value: 1, errorText: 'GANKSHARK' } };
     it('returns objects with _id set', () => {
         const actual = getInputProps(basicInputConfig, basicInputState, noop);
-        expect(actual.email._id).to.equal('email');
+        expect(actual.email._id).to.equal('inputs:email');
     });
     it('handles non-errored inputs', () => {
         const actual = getInputProps(basicInputConfig, basicInputState, noop);
@@ -491,8 +461,8 @@ describe('getInputProps', () => {
     });
     it('handles multiple objects', () => {
         const actual = getInputProps(multiInputConfig, multiInputState, noop);
-        expect(actual.email._id).to.equal('email');
-        expect(actual.name._id).to.equal('name');
+        expect(actual.email._id).to.equal('inputs:email');
+        expect(actual.name._id).to.equal('inputs:name');
     });
     it('throws an invariant error when ids are not present in state', () => {
         const actualFn = () => getInputProps(multiInputConfig, basicInputState, noop);
@@ -529,20 +499,6 @@ describe('createOnChangeWithTransform', () => {
         const onChange = createOnChangeWithTransform('id', promiseThunk);
         const actual = onChange('val');
         expect(actual.then).to.be.a('function');
-    });
-    it('returned function calls resolve on dispatch resolution', () => {
-        const resolve = sinon.spy();
-        const onChange = createOnChangeWithTransform('id', promiseThunk, undefined, undefined, resolve);
-        return onChange('val').then(() => {
-            expect(resolve.calledOnce).to.be.true;
-        });
-    });
-    it('returned function call reject on dispatch rejection', () => {
-        const reject = sinon.spy();
-        const onChange = createOnChangeWithTransform('id', promiseRejectThunk, undefined, undefined, undefined, reject);
-        return onChange('val').then(() => {
-            expect(reject.calledOnce).to.be.true;
-        });
     });
 });
 describe('ReduxInputsWrapper', () => {

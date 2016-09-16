@@ -31,7 +31,7 @@ Function for performing validation
 - *(Promise)*: a promise for performing async validation. Resolves if valid, rejects if invalid
     - `resolve` *(Function)*
     - `reject` *(Function)*
-        - Optionally, either callback can be passed *(Object)* `newInputState`  to  return the new input state object to set the input to. This is useful for adding error information to the input state.
+        - Optionally, reject can be passed *(String)* `errorMessage`, which is added to the input state.
         
 #### Example
 
@@ -69,10 +69,20 @@ Function for performing validation
                             resolve(); // Validation passed
                         }
                     })
-                })
+                });
             }
         }
     }
+
+### `onChange(value, inputsState, state, dispatch)`
+ 
+Function for firing actions after an input is validate and changed.
+ 
+#### Passed arguments
+1. `value` *(Any)* The value of the input being validated
+2. `inputsState` *(Object)* The current state of your inputs
+3. `state` *(Object)* The state of the entire redux store
+4. `dispatch` *(Function)* dispatch function from the redux store, for dispatching side-effect actions
 
 ## Form Config
 
@@ -94,5 +104,3 @@ In this example your state would look like this:
             inputs: {}
         }
     }
-    
-#### `metaCreator` *(Function)* is passed the action object whenever an action is created. Can be used to add meta information to a dispatched action. This can be useful for integrating with [redux-analytics](https://github.com/markdalgleish/redux-analytics).

@@ -7,7 +7,7 @@ import _property from 'lodash/property';
 import invariant from 'invariant';
 
 import { SET_INPUT, LOADING } from './actionTypes';
-import { FORM_KEY, getReduxMountPoint, getMetaCreator } from '../util/helpers';
+import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
 import log from '../util/log';
 import { getDefaultInputs } from '../reducers'
 
@@ -151,21 +151,13 @@ function _haveErrors(inputs) {
     return _isEmpty(erroredInputs) ? false : erroredInputs;
 }
 
-function _inputsMetaCreator(inputConfig, action) {
-    let metaCreator = getMetaCreator(inputConfig),
-        meta = (metaCreator && metaCreator(action)) || {};
-
-    return {
-        ...meta,
-        reduxMountPoint: getReduxMountPoint(inputConfig)
-    }
-}
-
 // Creates actions with meta information attached
 function _createActionWithMeta(inputConfig, action) {
     return {
         ...action,
-        meta: _inputsMetaCreator(inputConfig, action)
+        meta: {
+            reduxMountPoint: getReduxMountPoint(inputConfig)
+        }
     }
 }
 
