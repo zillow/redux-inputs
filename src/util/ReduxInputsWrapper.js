@@ -26,17 +26,15 @@ export const createOnChangeWithTransform = (
 const ReduxInputsWrapper = (WrappedComponent, options = {
     onChangeTransform: _identity
 }) => {
-    const Wrapper = (props) => {
-        const {
-            id,
-            _id,
-            value,
-            parser,
-            formatter,
-            dispatchChange,
-            ...otherProps
-        } = props;
-
+    const Wrapper = ({
+        id,
+        _id,
+        value,
+        parser,
+        formatter,
+        dispatchChange,
+        ...otherProps
+    }) => {
         const {
             /**
              * transform fn to run on onChange event before passing to redux
@@ -53,33 +51,33 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
         );
     };
     Wrapper.displayName = `ReduxInputsWrapper(${getDisplayName(WrappedComponent)})`;
+    Wrapper.propTypes = {
+        /**
+         * Generated id from getInputProps (mountPoint:key)
+         */
+        _id: React.PropTypes.string.isRequired,
+        /**
+         * Optional override id if you don't want to use default _id from inputConfig key
+         */
+        id: React.PropTypes.string,
+        /**
+         * The logical value of the input from the redux store
+         */
+        value: React.PropTypes.any,
+        /**
+         * Function to create a value from a change event into a value to store
+         */
+        parser: React.PropTypes.func,
+        /**
+         * Function to create a DOM-appropriate string from a value
+         */
+        formatter: React.PropTypes.func,
+        /**
+         * Private id - from getInputProps, returns a promise
+         */
+        dispatchChange: React.PropTypes.func.isRequired
+    };
     return Wrapper;
-};
-ReduxInputsWrapper.propTypes = {
-    /**
-     * Generated id from getInputProps (mountPoint:key)
-     */
-    _id: React.PropTypes.string.isRequired,
-    /**
-     * Optional override id if you don't want to use default _id from inputConfig key
-     */
-    id: React.PropTypes.string,
-    /**
-     * The logical value of the input from the redux store
-     */
-    value: React.PropTypes.any,
-    /**
-     * Function to create a value from a change event into a value to store
-     */
-    parser: React.PropTypes.func,
-    /**
-     * Function to create a DOM-appropriate string from a value
-     */
-    formatter: React.PropTypes.func,
-    /**
-     * Private id - from getInputProps, returns a promise
-     */
-    dispatchChange: React.PropTypes.func.isRequired
 };
 
 export default ReduxInputsWrapper;

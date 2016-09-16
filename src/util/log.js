@@ -6,5 +6,5 @@ export default {
         && console
         && console.error
         && console.error('[redux-inputs]: ' + message)
-}
+};
 

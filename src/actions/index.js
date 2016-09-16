@@ -9,7 +9,7 @@ import invariant from 'invariant';
 import { SET_INPUT, LOADING } from './actionTypes';
 import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
 import log from '../util/log';
-import { getDefaultInputs } from '../reducers'
+import { getDefaultInputs } from '../reducers';
 
 function _getInputsStateFromGlobal(inputConfig, state) {
     const mountPoint = getReduxMountPoint(inputConfig);
@@ -158,7 +158,7 @@ function _createActionWithMeta(inputConfig, action) {
         meta: {
             reduxMountPoint: getReduxMountPoint(inputConfig)
         }
-    }
+    };
 }
 
 export function loading(inputConfig, force) {
@@ -213,12 +213,12 @@ export function validateInputs(inputConfig, inputKeys) {
         }, {});
         const updateAndValidateActionCreator = updateAndValidate(inputConfig, inputsToValidate);
         return updateAndValidateActionCreator(dispatch, getState);
-    }
+    };
 }
 
 export function updateAndValidate(inputConfig, update) {
     return (dispatch, getState) => {
-        let inputs = _filterUnknownInputs(inputConfig, update)
+        let inputs = _filterUnknownInputs(inputConfig, update);
 
         if (_isEmpty(inputs)) {
             return Promise.resolve();
@@ -230,7 +230,7 @@ export function updateAndValidate(inputConfig, update) {
         dispatch(setInput(inputConfig, results));
 
         return _asyncValidate(inputConfig, results, getState(), dispatch);
-    }
+    };
 }
 
 /**

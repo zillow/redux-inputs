@@ -2,12 +2,12 @@ import connect from 'react-redux';
 import invariant from 'invariant';
 import _mapValues from 'lodash/mapValues';
 import _omit from 'lodash/omit';
+import _property from 'lodash/property';
 
 import { updateAndValidate } from '../actions';
 
 export const FORM_KEY = '_form';
 export const DEFAULT_REDUX_MOUNT_POINT = 'inputs';
-const identity = x => x;
 
 export function getReduxMountPoint(inputConfig) {
     const formConfig = inputConfig[FORM_KEY];
@@ -73,7 +73,7 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         mapStateToProps = i => i,
         mapDispatchToProps = dispatch => ({ dispatch }),
         mergeProps = (stateProps, dispatchProps, ownProps) => ({ ...stateProps, ...dispatchProps, ...ownProps }),
-        options = {}
+        connectOptions = {}
     ) => Component => connect(
         mapStateToProps,
         (dispatch, ownProps) => ({
@@ -86,7 +86,7 @@ export const connectWithInputs = (inputConfig, options = {}) => {
             ),
             ...mergeProps(stateProps, dispatchProps, ownProps)
         }),
-        options
+        connectOptions
     )(Component);
 };
 

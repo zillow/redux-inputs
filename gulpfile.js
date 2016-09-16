@@ -8,7 +8,7 @@ gulp.task('clean', function () {
 	return del(libDir);
 });
 
-gulp.task('eslint', function (){
+gulp.task('eslint', function () {
 	return gulp.src('src/**/*.js')
 		.pipe(eslint())
 		.pipe(eslint.format())
