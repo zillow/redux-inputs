@@ -27,11 +27,11 @@ Function for performing validation
 
 #### Must return one of the following:
 - *(Boolean)*: true for valid, false for invalid.
-- *(Object)* `newInputState` : represents the new state of the input. This can be used to add error information to the input state, such as setting errorText.
+- *(String)*: indicates an error and becomes errorText, which is added to the input state
 - *(Promise)*: a promise for performing async validation. Resolves if valid, rejects if invalid
     - `resolve` *(Function)*
     - `reject` *(Function)*
-        - Optionally, reject can be passed *(String)* `errorMessage`, which is added to the input state.
+        - Optionally, reject can be passed *(String)* `errorText`, which is added to the input state.
         
 #### Example
 
@@ -77,6 +77,8 @@ Function for performing validation
 ### `onChange(value, inputsState, state, dispatch)`
  
 Function for firing actions after an input is validate and changed.
+
+### `props` *(Object)* Props to pass down to every component associated with this input 
  
 #### Passed arguments
 1. `value` *(Any)* The value of the input being validated

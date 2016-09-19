@@ -1,9 +1,9 @@
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import sinon from 'sinon';
 import React from 'react';
 import { createInputsReducer } from '../src';
-import { SET_INPUT, LOADING } from '../src/actions/actionTypes';
-import { setInput, loading, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
+import { SET_INPUT, VALIDATING } from '../src/actions/actionTypes';
+import { setInput, validating, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps } from '../src/util/helpers';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
@@ -246,11 +246,11 @@ describe('resetInputs action creator', () => {
     });
 });
 
-describe('loading action creator', () => {
-    it('should create a valid LOADING action', () => {
-        let action = loading({}, true);
+describe('validating action creator', () => {
+    it('should create a valid VALIDATING action', () => {
+        let action = validating({}, true);
         expect(action).to.deep.equal({
-            type: LOADING,
+            type: VALIDATING,
             payload: true,
             meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
         });
@@ -273,7 +273,7 @@ describe('updateAndValidate thunk', () => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
                 payload: {
-                    email: { value: 'test@test.com', loading: false }
+                    email: { value: 'test@test.com', validating: false }
                 },
                 error: false,
                 meta: { reduxMountPoint: 'inputs' }
@@ -297,7 +297,7 @@ describe('updateAndValidate thunk', () => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
                 payload: {
-                    email: { value: 'previous', error: 'test', loading: false }
+                    email: { value: 'previous', error: 'test', validating: false }
                 },
                 error: true,
                 meta: { reduxMountPoint: 'inputs' }
@@ -309,17 +309,14 @@ describe('updateAndValidate thunk', () => {
             }
         }));
     });
-    it('correctly dispatches client side validation inputState setting', () => {
+    it('correctly dispatches client side validation with errorText', () => {
         let thunk = updateAndValidate({
             email: {
                 validator: value => {
                     if (!value) {
                         return false
                     } else if (value.length < 5) {
-                        return {
-                            error: value,
-                            errorText: 'Too short!'
-                        }
+                        return 'Too short!';
                     }
                     return false;
                 }
@@ -333,7 +330,12 @@ describe('updateAndValidate thunk', () => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
                 payload: {
-                    email: { error: 'test', errorText: 'Too short!' }
+                    email: {
+                        error: 'test',
+                        errorText: 'Too short!',
+                        validating: false,
+                        value: 'previous'
+                    }
                 },
                 error: true,
                 meta: { reduxMountPoint: 'inputs' }
@@ -351,7 +353,7 @@ describe('updateAndValidate thunk', () => {
                 reduxMountPoint: 'page.inputs'
             },
             email: {
-                validator: value => (value && value.length > 0)
+                validator: value => !!(value && value.length > 0)
             }
         }, {
             email: ''
@@ -362,7 +364,7 @@ describe('updateAndValidate thunk', () => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
                 payload: {
-                    email: { value: 'test@test.com', error: '', loading: false }
+                    email: { value: 'test@test.com', error: '', validating: false }
                 },
                 error: true,
                 meta: { reduxMountPoint: 'page.inputs' }
@@ -375,6 +377,308 @@ describe('updateAndValidate thunk', () => {
                 }
             }
         }));
+    });
+    it('correctly dispatches async validation VALID changes', () => {
+        let thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.resolve();
+                }
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        const stubbedDispatch = sinon.stub();
+
+        return thunk(stubbedDispatch, () => ({
+            // Mocked initial state
+            inputs: {}
+        })).then(inputState => {
+            expect(inputState).to.deep.equal({
+                email: { value: 'test@test.com' }
+            });
+            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: true,
+                type: "RI_VALIDATING"
+            });
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { validating: true, value: "test@test.com" }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { value: "test@test.com" }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: false,
+                type: "RI_VALIDATING"
+            });
+        });
+    });
+    it('correctly dispatches async validation INVALID changes', () => {
+        let thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.reject();
+                }
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        const stubbedDispatch = sinon.stub();
+
+        return thunk(stubbedDispatch, () => ({
+            // Mocked initial state
+            inputs: {}
+        })).then(null, inputState => {
+            expect(inputState).to.deep.equal({
+                email: {
+                    error: 'test@test.com',
+                    errorText: undefined,
+                    value: undefined
+                }
+            });
+            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: true,
+                type: "RI_VALIDATING"
+            });
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { validating: true, value: "test@test.com" }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+                error: true,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: {
+                    error: "test@test.com",
+                    errorText: undefined,
+                    value: undefined
+                }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: false,
+                type: "RI_VALIDATING"
+            });
+        });
+    });
+    it('correctly dispatches async validation INVALID changes with errorText', () => {
+        let thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.reject('Invalid domain!');
+                }
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        const stubbedDispatch = sinon.stub();
+
+        return thunk(stubbedDispatch, () => ({
+            // Mocked initial state
+            inputs: {}
+        })).then(null, inputState => {
+            expect(inputState).to.deep.equal({
+                email: {
+                    error: 'test@test.com',
+                    errorText: 'Invalid domain!',
+                    value: undefined
+                }
+            });
+            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: true,
+                type: "RI_VALIDATING"
+            });
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { validating: true, value: "test@test.com" }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+                error: true,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: {
+                    error: "test@test.com",
+                    errorText: 'Invalid domain!',
+                    value: undefined
+                }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: false,
+                type: "RI_VALIDATING"
+            });
+        });
+    });
+    it('correctly dispatches mixed client + async validation VALID changes', () => {
+        let thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.resolve();
+                }
+            },
+            name: {
+                validator: value => !!value && value.length > 2
+            }
+        }, {
+            email: 'test@test.com',
+            name: 'Bob'
+        });
+
+        const stubbedDispatch = sinon.stub();
+
+        return thunk(stubbedDispatch, () => ({
+            // Mocked initial state
+            inputs: {}
+        })).then(inputState => {
+            expect(inputState).to.deep.equal({
+                email: { value: 'test@test.com' },
+                name: { value: 'Bob', validating: false }
+            });
+            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: true,
+                type: "RI_VALIDATING"
+            });
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: {
+                    email: { validating: true, value: "test@test.com" },
+                    name: { validating: false, value: 'Bob' }
+                },
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { value: "test@test.com" }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: false,
+                type: "RI_VALIDATING"
+            });
+        });
+    });
+    it('correctly dispatches mixed invalid client + valid async validation changes', () => {
+        let thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.resolve();
+                }
+            },
+            name: {
+                validator: value => !!value && value.length > 2
+            }
+        }, {
+            email: 'test@test.com',
+            name: 'Jo'
+        });
+
+        const stubbedDispatch = sinon.stub();
+
+        return thunk(stubbedDispatch, () => ({
+            // Mocked initial state
+            inputs: {}
+        })).then(null, inputState => {
+            expect(inputState).to.deep.equal({
+                name: { error: 'Jo', validating: false, value: undefined }
+            });
+            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: true,
+                type: "RI_VALIDATING"
+            });
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
+                error: true,
+                meta: { reduxMountPoint: "inputs" },
+                payload: {
+                    email: { validating: true, value: "test@test.com" },
+                    name: { validating: false, error: 'Jo', value: undefined }
+                },
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { value: "test@test.com" }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: false,
+                type: "RI_VALIDATING"
+            });
+        });
+    });
+    it('correctly dispatches mixed valid client + invalid async validation changes', () => {
+        let thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.reject();
+                }
+            },
+            name: {
+                validator: value => !!value && value.length > 2
+            }
+        }, {
+            email: 'test@test.com',
+            name: 'Bob'
+        });
+
+        const stubbedDispatch = sinon.stub();
+
+        return thunk(stubbedDispatch, () => ({
+            // Mocked initial state
+            inputs: {}
+        })).then(null, inputState => {
+            expect(inputState).to.deep.equal({
+                email: { error: 'test@test.com', errorText: undefined, value: undefined }
+            });
+            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: true,
+                type: "RI_VALIDATING"
+            });
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
+                error: false,
+                meta: { reduxMountPoint: "inputs" },
+                payload: {
+                    email: { validating: true, value: "test@test.com" },
+                    name: { validating: false, value: 'Bob' }
+                },
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+                error: true,
+                meta: { reduxMountPoint: "inputs" },
+                payload: { email: { error: "test@test.com", errorText: undefined, value: undefined }},
+                type: "RI_SET_INPUT"
+            });
+            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
+                meta: { reduxMountPoint: "inputs" },
+                payload: false,
+                type: "RI_VALIDATING"
+            });
+        });
     });
 });
 
@@ -389,13 +693,13 @@ describe('validateInputs thunk', () => {
         thunk((action) => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
-                payload: { email: { value: 'valid', loading: false } },
+                payload: { email: { value: 'valid', validating: false } },
                 error: false,
                 meta: { reduxMountPoint: 'inputs' }
             });
         }, () => ({ inputs: { email: { value: 'valid' } } }) /* getState */).then((results) => {
             expect(results).to.deep.equal({
-                email: { value: 'valid', loading: false }
+                email: { value: 'valid', validating: false }
             });
         });
     });
@@ -409,14 +713,14 @@ describe('validateInputs thunk', () => {
         thunk((action) => { // Dispatch
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
-                payload: { email: { value: undefined, error: '', loading: false } },
+                payload: { email: { value: undefined, error: '', validating: false } },
                 error: true,
                 meta: { reduxMountPoint: 'inputs' }
             });
         }, () => ({ inputs: { email: { value: undefined } } }) /* getState */).then(null, (erroredInputs) => {
             // Reject
             expect(erroredInputs).to.equal({
-                email: { value: undefined, error: '', loading: false }
+                email: { value: undefined, error: '', validating: false }
             });
         });
     });
