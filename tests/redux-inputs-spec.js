@@ -1,11 +1,15 @@
 import { expect, assert } from 'chai';
 import sinon from 'sinon';
 import React from 'react';
+import configureMockStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT, VALIDATING } from '../src/actions/actionTypes';
-import { setInput, validating, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
+import { _setInput, setInput, validating, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps } from '../src/util/helpers';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
+
+const mockStore = configureMockStore([thunk]);
 
 describe('createInputsReducer', () => {
     describe('no input config', () => {
@@ -191,9 +195,9 @@ describe('createInputsReducer', () => {
     });
 });
 
-describe('setInput action creator', () => {
+describe('_setInput action creator', () => {
     it('should create a valid SET_INPUT action', () => {
-        let action = setInput({}, {
+        let action = _setInput({}, {
             email: { value: 'test@test.com' }
         });
         expect(action).to.deep.equal({
@@ -204,7 +208,7 @@ describe('setInput action creator', () => {
         });
     });
     it('should set error correctly on errored payload', () => {
-        let action = setInput({}, {
+        let action = _setInput({}, {
             email: { error: 'test@test.com' }
         });
         expect(action).to.deep.equal({
@@ -215,7 +219,7 @@ describe('setInput action creator', () => {
         });
     });
     it('should set reduxMountPoint meta information based on inputConfig settings', () => {
-        let action = setInput({
+        let action = _setInput({
             // Input Config
             _form: {
                 reduxMountPoint: 'alternate'
@@ -232,21 +236,113 @@ describe('setInput action creator', () => {
     });
 });
 
-describe('resetInputs action creator', () => {
-    it('should return a RI_SET_INPUT action', () => {
-        let actual = resetInputs({});
-        expect(actual.type).to.equal('RI_SET_INPUT');
+describe('setInput thunk', () => {
+    it('should create a valid SET_INPUT action', () => {
+        const thunk = setInput({
+            email: {}
+        }, {
+            email: { value: 'test@test.com' }
+        });
+
+        thunk(action => { // dispatch
+            expect(action).to.deep.equal({
+                type: SET_INPUT,
+                payload: { email: { value: 'test@test.com' } },
+                error: false,
+                meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+            })
+        }, () => ({
+            [DEFAULT_REDUX_MOUNT_POINT]: {}
+        }));
     });
-    it('should return values back to their defaults', () => {
-        let actual = resetInputs({ blank: {}, defaulted: { defaultValue: 2 }});
-        expect(actual.payload).to.deep.equal({
-            blank: { value: undefined },
-            defaulted: { value: 2}
+    it('should fire onChange for changed inputs', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: {
+                email: { value: 'test@test.com' },
+                name: { value: 'nombre' }
+            },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }];
+        const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
+        const thunk = setInput({
+            email: {
+                onChange: (inputState, inputs, state) => {
+                    expect(inputState).to.deep.equal({ value: 'test@test.com' });
+                    expect(inputs).to.deep.equal({
+                        email: { value: 'storevalue' }
+                    });
+                    expect(state).to.deep.equal({
+                         inputs: { email: { value: 'storevalue' } }
+                    });
+                }
+            },
+            name: {
+                onChange: (inputState) => {
+                    expect(inputState).to.deep.equal({
+                        value: 'nombre'
+                    });
+                }
+            }
+        }, {
+            email: { value: 'test@test.com' },
+            name: { value: 'nombre' }
+        });
+
+        return store.dispatch(thunk).then((changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
+    });
+    it('should not fire onChange for changed inputs when passing suppressChange', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: {
+                email: { value: 'test@test.com' }
+            },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }];
+        const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
+        const onChangeSpy = sinon.spy();
+        const thunk = setInput({
+            email: {
+                onChange: onChangeSpy
+            }
+        }, {
+            email: { value: 'test@test.com' }
+        }, true);
+
+        return store.dispatch(thunk).then((changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(onChangeSpy.callCount).to.equal(0);
         });
     });
 });
 
-describe('validating action creator', () => {
+describe('resetInputs thunk', () => {
+    it('should return a RI_SET_INPUT action', () => {
+        const thunk = resetInputs({});
+        thunk(action => {
+            expect(action.type).to.equal('RI_SET_INPUT');
+        }, () => ({
+            [DEFAULT_REDUX_MOUNT_POINT]: {}
+        }));
+    });
+    it('should return values back to their defaults', () => {
+        const thunk = resetInputs({ blank: {}, defaulted: { defaultValue: 2 }});
+        thunk(action => {
+            expect(action.payload).to.deep.equal({
+                blank: {value: undefined},
+                defaulted: {value: 2}
+            });
+        }, () => ({
+            [DEFAULT_REDUX_MOUNT_POINT]: {}
+        }));
+    });
+});
+
+describe('validating thunk', () => {
     it('should create a valid VALIDATING action', () => {
         let action = validating({}, true);
         expect(action).to.deep.equal({
@@ -256,7 +352,6 @@ describe('validating action creator', () => {
         });
     });
 });
-
 
 describe('updateAndValidate thunk', () => {
     it('correctly dispatches client side validation changes when valid', () => {
@@ -282,6 +377,28 @@ describe('updateAndValidate thunk', () => {
             // Mocked initial state
             inputs: {}
         }));
+    });
+    it('should not fire unnecessary async validation', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: { email: { value: 'test@test.com', validating: false } },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }];
+        const store = mockStore({ inputs: { email: { value: 'test@test.com' } } })
+        const thunk = updateAndValidate({
+            email: {
+                validator: value => {
+                    return Promise.resolve();
+                }
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        return store.dispatch(thunk).then((changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
     });
     it('correctly dispatches client side validation changes when errored', () => {
         let thunk = updateAndValidate({
@@ -379,7 +496,27 @@ describe('updateAndValidate thunk', () => {
         }));
     });
     it('correctly dispatches async validation VALID changes', () => {
-        let thunk = updateAndValidate({
+        const expectedActions = [{
+            meta: {reduxMountPoint: "inputs"},
+            payload: true,
+            type: "RI_VALIDATING"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: { validating: true, value: "test@test.com" }},
+            type: "RI_SET_INPUT"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: { value: "test@test.com" }},
+            type: "RI_SET_INPUT"
+        }, {
+            meta: {reduxMountPoint: "inputs"},
+            payload: false,
+            type: "RI_VALIDATING"
+        }];
+        const store = mockStore({ inputs: {} });
+        const thunk = updateAndValidate({
             email: {
                 validator: value => {
                     return Promise.resolve();
@@ -389,41 +526,39 @@ describe('updateAndValidate thunk', () => {
             email: 'test@test.com'
         });
 
-        const stubbedDispatch = sinon.stub();
-
-        return thunk(stubbedDispatch, () => ({
-            // Mocked initial state
-            inputs: {}
-        })).then(inputState => {
-            expect(inputState).to.deep.equal({
+        return store.dispatch(thunk).then(null, (changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(changed).to.deep.equal({
                 email: { value: 'test@test.com' }
-            });
-            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: true,
-                type: "RI_VALIDATING"
-            });
-            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: { validating: true, value: "test@test.com" }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: { value: "test@test.com" }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: false,
-                type: "RI_VALIDATING"
             });
         });
     });
     it('correctly dispatches async validation INVALID changes', () => {
-        let thunk = updateAndValidate({
+        const expectedActions = [{
+            meta: {reduxMountPoint: "inputs"},
+            payload: true,
+            type: "RI_VALIDATING"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: { validating: true, value: "test@test.com" }},
+            type: "RI_SET_INPUT"
+        }, {
+            error: true,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: {
+                error: "test@test.com",
+                errorText: undefined,
+                value: undefined
+            }},
+            type: "RI_SET_INPUT"
+        }, {
+            meta: {reduxMountPoint: "inputs"},
+            payload: false,
+            type: "RI_VALIDATING"
+        }];
+        const store = mockStore({ inputs: {} });
+        const thunk = updateAndValidate({
             email: {
                 validator: value => {
                     return Promise.reject();
@@ -433,44 +568,14 @@ describe('updateAndValidate thunk', () => {
             email: 'test@test.com'
         });
 
-        const stubbedDispatch = sinon.stub();
-
-        return thunk(stubbedDispatch, () => ({
-            // Mocked initial state
-            inputs: {}
-        })).then(null, inputState => {
-            expect(inputState).to.deep.equal({
+        return store.dispatch(thunk).then(null, (changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(changed).to.deep.equal({
                 email: {
                     error: 'test@test.com',
                     errorText: undefined,
                     value: undefined
                 }
-            });
-            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: true,
-                type: "RI_VALIDATING"
-            });
-            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: { validating: true, value: "test@test.com" }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
-                error: true,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: {
-                    error: "test@test.com",
-                    errorText: undefined,
-                    value: undefined
-                }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: false,
-                type: "RI_VALIDATING"
             });
         });
     });
@@ -527,7 +632,30 @@ describe('updateAndValidate thunk', () => {
         });
     });
     it('correctly dispatches mixed client + async validation VALID changes', () => {
-        let thunk = updateAndValidate({
+        const expectedActions = [{
+            meta: {reduxMountPoint: "inputs"},
+            payload: true,
+            type: "RI_VALIDATING"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: {
+                email: { validating: true, value: "test@test.com" },
+                name: { validating: false, value: 'Bob' }
+            },
+            type: "RI_SET_INPUT"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: { value: "test@test.com" }},
+            type: "RI_SET_INPUT"
+        }, {
+            meta: {reduxMountPoint: "inputs"},
+            payload: false,
+            type: "RI_VALIDATING"
+        }];
+        const store = mockStore({ inputs: {} });
+        const thunk = updateAndValidate({
             email: {
                 validator: value => {
                     return Promise.resolve();
@@ -541,45 +669,39 @@ describe('updateAndValidate thunk', () => {
             name: 'Bob'
         });
 
-        const stubbedDispatch = sinon.stub();
-
-        return thunk(stubbedDispatch, () => ({
-            // Mocked initial state
-            inputs: {}
-        })).then(inputState => {
-            expect(inputState).to.deep.equal({
+        return store.dispatch(thunk).then(null, (changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(changed).to.deep.equal({
                 email: { value: 'test@test.com' },
                 name: { value: 'Bob', validating: false }
-            });
-            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: true,
-                type: "RI_VALIDATING"
-            });
-            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: {
-                    email: { validating: true, value: "test@test.com" },
-                    name: { validating: false, value: 'Bob' }
-                },
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: { value: "test@test.com" }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: false,
-                type: "RI_VALIDATING"
             });
         });
     });
     it('correctly dispatches mixed invalid client + valid async validation changes', () => {
-        let thunk = updateAndValidate({
+        const expectedActions = [{
+            meta: {reduxMountPoint: "inputs"},
+            payload: true,
+            type: "RI_VALIDATING"
+        }, {
+            error: true,
+            meta: { reduxMountPoint: "inputs" },
+            payload: {
+                email: { validating: true, value: "test@test.com" },
+                name: { validating: false, error: 'Jo', value: undefined }
+            },
+            type: "RI_SET_INPUT"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: { value: "test@test.com" }},
+            type: "RI_SET_INPUT"
+        }, {
+            meta: {reduxMountPoint: "inputs"},
+            payload: false,
+            type: "RI_VALIDATING"
+        }];
+        const store = mockStore({ inputs: {} });
+        const thunk = updateAndValidate({
             email: {
                 validator: value => {
                     return Promise.resolve();
@@ -593,44 +715,38 @@ describe('updateAndValidate thunk', () => {
             name: 'Jo'
         });
 
-        const stubbedDispatch = sinon.stub();
-
-        return thunk(stubbedDispatch, () => ({
-            // Mocked initial state
-            inputs: {}
-        })).then(null, inputState => {
-            expect(inputState).to.deep.equal({
+        return store.dispatch(thunk).then(null, (changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(changed).to.deep.equal({
                 name: { error: 'Jo', validating: false, value: undefined }
-            });
-            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: true,
-                type: "RI_VALIDATING"
-            });
-            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
-                error: true,
-                meta: { reduxMountPoint: "inputs" },
-                payload: {
-                    email: { validating: true, value: "test@test.com" },
-                    name: { validating: false, error: 'Jo', value: undefined }
-                },
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: { value: "test@test.com" }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: false,
-                type: "RI_VALIDATING"
             });
         });
     });
     it('correctly dispatches mixed valid client + invalid async validation changes', () => {
-        let thunk = updateAndValidate({
+        const expectedActions = [{
+            meta: {reduxMountPoint: "inputs"},
+            payload: true,
+            type: "RI_VALIDATING"
+        }, {
+            error: false,
+            meta: { reduxMountPoint: "inputs" },
+            payload: {
+                email: { validating: true, value: "test@test.com" },
+                name: { validating: false, value: 'Bob' }
+            },
+            type: "RI_SET_INPUT"
+        }, {
+            error: true,
+            meta: { reduxMountPoint: "inputs" },
+            payload: { email: { error: "test@test.com", errorText: undefined, value: undefined }},
+            type: "RI_SET_INPUT"
+        }, {
+            meta: {reduxMountPoint: "inputs"},
+            payload: false,
+            type: "RI_VALIDATING"
+        }];
+        const store = mockStore({ inputs: {} });
+        const thunk = updateAndValidate({
             email: {
                 validator: value => {
                     return Promise.reject();
@@ -644,40 +760,93 @@ describe('updateAndValidate thunk', () => {
             name: 'Bob'
         });
 
-        const stubbedDispatch = sinon.stub();
-
-        return thunk(stubbedDispatch, () => ({
-            // Mocked initial state
-            inputs: {}
-        })).then(null, inputState => {
-            expect(inputState).to.deep.equal({
+        return store.dispatch(thunk).then(null, (changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(changed).to.deep.equal({
                 email: { error: 'test@test.com', errorText: undefined, value: undefined }
             });
-            expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: true,
-                type: "RI_VALIDATING"
+        });
+    });
+    it('should fire onChange for changed inputs', () => {
+        const expectedActions = [{
+            meta: {reduxMountPoint: "inputs"},
+            payload: true,
+            type: "RI_VALIDATING"
+        }, {
+            type: SET_INPUT,
+            payload: {
+                email: {
+                    value: 'test@test.com',
+                    validating: true
+                }
+            },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }, {
+            type: SET_INPUT,
+            payload: {
+                email: {
+                    value: 'test@test.com'
+                }
+            },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }, {
+            meta: {reduxMountPoint: "inputs"},
+            payload: false,
+            type: "RI_VALIDATING"
+        }];
+        const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
+        const onChangeSpy = sinon.spy();
+        const thunk = updateAndValidate({
+            email: {
+                onChange: onChangeSpy,
+                validator: value => !!value && value.length > 5 && Promise.resolve()
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        return store.dispatch(thunk).then((changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(onChangeSpy.callCount).to.equal(2);
+            expect(onChangeSpy.getCall(0).args[0]).to.deep.equal({
+                value: 'test@test.com',
+                validating: true
             });
-            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
-                error: false,
-                meta: { reduxMountPoint: "inputs" },
-                payload: {
-                    email: { validating: true, value: "test@test.com" },
-                    name: { validating: false, value: 'Bob' }
-                },
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
-                error: true,
-                meta: { reduxMountPoint: "inputs" },
-                payload: { email: { error: "test@test.com", errorText: undefined, value: undefined }},
-                type: "RI_SET_INPUT"
-            });
-            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: false,
-                type: "RI_VALIDATING"
-            });
+            expect(onChangeSpy.getCall(1).args[0]).to.deep.equal({
+                value: 'test@test.com'
+            })
+        });
+    });
+    it('should suppress onChange for changed inputs when suppressChange is passed', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: {
+                email: {
+                    error: 'te',
+                    value: 'storevalue',
+                    validating: false
+                }
+            },
+            error: true,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }];
+        const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
+        const onChangeSpy = sinon.spy();
+        const thunk = updateAndValidate({
+            email: {
+                onChange: onChangeSpy,
+                validator: value => !!value && value.length > 2
+            }
+        }, {
+            email: 'te'
+        }, true);
+
+        return store.dispatch(thunk).then(null, (changed) => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(onChangeSpy.callCount).to.equal(0);
+
         });
     });
 });
@@ -725,6 +894,7 @@ describe('validateInputs thunk', () => {
         });
     });
 });
+
 const noop = () => {};
 describe('getInputProps', () => {
     const basicInputConfig = { email: {} };

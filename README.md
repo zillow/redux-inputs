@@ -262,3 +262,6 @@ Returns an action that when dispatched will reset the form values associated wit
 
 
 TODO: document exported action types
+TODO: calls during async validating?
+TODO: validating state
+TODO: pristine

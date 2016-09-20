@@ -1,7 +1,10 @@
+import _assign from 'lodash/assign';
 import _reduce from 'lodash/reduce';
+import _forEach from 'lodash/forEach';
 import _isEmpty from 'lodash/isEmpty';
 import _keys from 'lodash/keys';
 import _property from 'lodash/property';
+import _isEqual from 'lodash/isEqual';
 import invariant from 'invariant';
 
 import { SET_INPUT, VALIDATING } from './actionTypes';
@@ -29,7 +32,7 @@ function _filterUnknownInputs(inputConfig, inputs) {
     }, {});
 }
 
-function _validate(inputConfig, inputs, state, dispatch) {
+function _validate(inputConfig, inputs, state, dispatch, getState, suppressChange) {
     const inputsState = _getInputsStateFromGlobal(inputConfig, state);
     const promises = [];
     let anyAsync = false;
@@ -39,25 +42,22 @@ function _validate(inputConfig, inputs, state, dispatch) {
 
         const validationResult = validator ? validator(value, inputsState, state, dispatch) : true,
               prev = inputsState[key] && inputsState[key].value,
+              unchanged = _isEqual(prev, value),
               hasAsync = typeof validationResult === 'object' && !!validationResult.then;
 
-        const dispatchAndReturnPromiseResult = inputState => {
-            dispatch(setInput(inputConfig, { [key]: inputState }));
-            return {
-                key,
-                inputState
-            };
-        };
+        const dispatchAndReturnPromiseResult = inputState =>
+            setInput(inputConfig, { [key]: inputState }, suppressChange)(dispatch, getState);
 
         if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
             const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
                 value: value,
-                validating: hasAsync // Will be validating if async validator exists
+                validating: hasAsync && !unchanged // Will be validating if async validator exists
             }) : ({ // False returned, input invalid
                 value: prev,
                 error: value || '',
                 validating: false
             });
+
 
             // Add errorText if validator returned a string
             if (typeof validationResult === 'string') {
@@ -66,33 +66,28 @@ function _validate(inputConfig, inputs, state, dispatch) {
 
             result[key] = change;
 
-            if (!hasAsync) {
-                promises.push(Promise.resolve({
-                    key,
-                    inputState: change
-                }));
+            if (!hasAsync || unchanged) {
+                promises.push(Promise.resolve({ [key]: change }));
+            } else {
+                anyAsync = true;
+                // Kick off async
+                promises.push(validationResult.then(
+                    // Passed validation
+                    () => dispatchAndReturnPromiseResult({ value }),
+                    // Failed validation
+                    errorText => dispatchAndReturnPromiseResult({
+                        value: prev,
+                        error: value || '',
+                        errorText
+                    })
+                ));
             }
         } else {
             log.error(`
                 Value returned from validator must be a 
-                boolean representing valid/invalid, or an promise representing ${key}\'s 
-                new state. Got ${typeof validationResult} instead.
+                boolean representing valid/invalid, a string representing errorText, or a promise for performing async 
+                validation. Got ${typeof validationResult} instead.
             `);
-        }
-
-        if (hasAsync) {
-            anyAsync = true;
-            // Kick off async
-            promises.push(validationResult.then(
-                // Passed validation
-                () => dispatchAndReturnPromiseResult({ value }),
-                // Failed validation
-                errorText => dispatchAndReturnPromiseResult({
-                    value: prev,
-                    error: value || '',
-                    errorText
-                })
-            ));
         }
 
         return result;
@@ -101,14 +96,12 @@ function _validate(inputConfig, inputs, state, dispatch) {
     if (anyAsync) {
         dispatch(validating(inputConfig, true));
     }
-    dispatch(setInput(inputConfig, changes));
+    setInput(inputConfig, changes, suppressChange)(dispatch, getState);
 
     return new Promise((resolve, reject) => {
         Promise.all(promises).then(results => {
-            const resultObject = _reduce(results, (result, { key, inputState }) => {
-                result[key] = inputState;
-                return result;
-            }, {});
+            const resultObject = _assign({}, ...results);
+
             if (anyAsync) {
                 dispatch(validating(inputConfig, false));
             }
@@ -150,8 +143,27 @@ export function validating(inputConfig, force) {
     });
 }
 
+export function _setInput(inputConfig, update) {
+    return _createActionWithMeta(inputConfig, {
+        type: SET_INPUT,
+        payload: update,
+        error: !!_haveErrors(update)
+    });
+}
+
+function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
+    _forEach(update, (input, key) => {
+        const { onChange } = inputConfig[key] || {};
+        if (onChange) {
+            onChange(input, inputsState, state, dispatch);
+        }
+    });
+}
+
 /**
  * Sets inputs' states without validation
+ *
+ * Also fires onChange callbacks for changed inputs
  *
  * `update` example:
  *  {
@@ -160,12 +172,16 @@ export function validating(inputConfig, force) {
  *      }
  *  }
  */
-export function setInput(inputConfig, update) {
-    return _createActionWithMeta(inputConfig, {
-        type: SET_INPUT,
-        payload: update,
-        error: !!_haveErrors(update)
-    });
+export function setInput(inputConfig, update, suppressChange) {
+    return (dispatch, getState) => {
+        dispatch(_setInput(inputConfig, update));
+        if (!suppressChange) {
+            const state = getState();
+            const inputsState = _getInputsStateFromGlobal(inputConfig, state);
+            _fireChanges(inputConfig, update, inputsState, state, dispatch);
+        }
+        return Promise.resolve(update);
+    };
 }
 
 export function resetInputs(inputConfig) {
@@ -187,36 +203,25 @@ export function validateInputs(inputConfig, inputKeys) {
             if (key === FORM_KEY) {
                 return result;
             }
-            let input = inputsState[key];
+            const input = inputsState[key];
             if (inputConfig[key] && input) {
                 result[key] = typeof input.error !== 'undefined' ? input.error : input.value;
             }
             return result;
         }, {});
-        const updateAndValidateActionCreator = updateAndValidate(inputConfig, inputsToValidate);
-        return updateAndValidateActionCreator(dispatch, getState);
+        return updateAndValidate(inputConfig, inputsToValidate)(dispatch, getState);
     };
 }
 
-export function updateAndValidate(inputConfig, update) {
+export function updateAndValidate(inputConfig, update, suppressChange) {
     return (dispatch, getState) => {
-        let inputs = _filterUnknownInputs(inputConfig, update);
+        const inputs = _filterUnknownInputs(inputConfig, update);
 
         if (_isEmpty(inputs)) {
             return Promise.resolve();
         }
 
         // Return promise from validate
-        return _validate(inputConfig, inputs, getState(), dispatch);
+        return _validate(inputConfig, inputs, getState(), dispatch, getState, suppressChange);
     };
-}
-
-/**
- * Creates a reusable thunk for setting and validating inputs
- *
- * @param inputConfig
- * @returns {Function}
- */
-export function createInputsThunk(inputConfig) {
-    return update => updateAndValidate(inputConfig, update);
 }

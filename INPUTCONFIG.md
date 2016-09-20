@@ -21,7 +21,7 @@ Function for performing validation
  
 #### Passed arguments
 1. `value` *(Any)* The value of the input being validated
-2. `inputsState` *(Object)* The current state of your inputs
+2. `inputs` *(Object)* The current state of your inputs
 3. `state` *(Object)* The state of the entire redux store
 4. `dispatch` *(Function)* dispatch function from the redux store, for dispatching side-effect actions
 
@@ -74,17 +74,17 @@ Function for performing validation
         }
     }
 
-### `onChange(value, inputsState, state, dispatch)`
+### `onChange(inputState, inputs, state, dispatch)`
  
 Function for firing actions after an input is validate and changed.
-
-### `props` *(Object)* Props to pass down to every component associated with this input 
  
 #### Passed arguments
-1. `value` *(Any)* The value of the input being validated
-2. `inputsState` *(Object)* The current state of your inputs
-3. `state` *(Object)* The state of the entire redux store
+1. `inputState` *(Object)* The new state of the input being changed. Contains properties such as `value`, `error`, `validating`.
+2. `inputs` *(Object)* The new state of your inputs
+3. `state` *(Object)* The new state of the entire redux store
 4. `dispatch` *(Function)* dispatch function from the redux store, for dispatching side-effect actions
+
+### `props` *(Object)* Props to pass down to every component associated with this input 
 
 ## Form Config
 
