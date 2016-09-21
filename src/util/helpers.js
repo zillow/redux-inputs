@@ -69,6 +69,7 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         // Defaults
         inputPropsKey: 'inputProps',
         inputActionsKey: 'inputActions',
+        formKey: 'form',
         connect: connect,
         ...options
     };

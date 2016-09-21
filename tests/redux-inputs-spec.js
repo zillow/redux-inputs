@@ -341,6 +341,16 @@ describe('resetInputs thunk', () => {
             [DEFAULT_REDUX_MOUNT_POINT]: {}
         }));
     });
+    it('should only return values specified back to their defaults', () => {
+        const thunk = resetInputs({ blank: {}, defaulted: { defaultValue: 2 }}, ['blank']);
+        thunk(action => {
+            expect(action.payload).to.deep.equal({
+                blank: {value: undefined}
+            });
+        }, () => ({
+            [DEFAULT_REDUX_MOUNT_POINT]: {}
+        }));
+    });
 });
 
 describe('validating thunk', () => {

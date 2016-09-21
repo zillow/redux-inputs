@@ -1,3 +1,4 @@
+import _pick from 'lodash/pick';
 import _assign from 'lodash/assign';
 import _reduce from 'lodash/reduce';
 import _forEach from 'lodash/forEach';
@@ -30,89 +31,6 @@ function _filterUnknownInputs(inputConfig, inputs) {
         }
         return result;
     }, {});
-}
-
-function _validate(inputConfig, inputs, state, dispatch, getState, suppressChange) {
-    const inputsState = _getInputsStateFromGlobal(inputConfig, state);
-    const promises = [];
-    let anyAsync = false;
-
-    const changes = _reduce(inputs, (result, value, key) => {
-        const { validator } = inputConfig[key];
-
-        const validationResult = validator ? validator(value, inputsState, state, dispatch) : true,
-              prev = inputsState[key] && inputsState[key].value,
-              unchanged = _isEqual(prev, value),
-              hasAsync = typeof validationResult === 'object' && !!validationResult.then;
-
-        const dispatchAndReturnPromiseResult = inputState =>
-            setInput(inputConfig, { [key]: inputState }, suppressChange)(dispatch, getState);
-
-        if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
-            const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
-                value: value,
-                validating: hasAsync && !unchanged // Will be validating if async validator exists
-            }) : ({ // False returned, input invalid
-                value: prev,
-                error: value || '',
-                validating: false
-            });
-
-
-            // Add errorText if validator returned a string
-            if (typeof validationResult === 'string') {
-                change.errorText = validationResult;
-            }
-
-            result[key] = change;
-
-            if (!hasAsync || unchanged) {
-                promises.push(Promise.resolve({ [key]: change }));
-            } else {
-                anyAsync = true;
-                // Kick off async
-                promises.push(validationResult.then(
-                    // Passed validation
-                    () => dispatchAndReturnPromiseResult({ value }),
-                    // Failed validation
-                    errorText => dispatchAndReturnPromiseResult({
-                        value: prev,
-                        error: value || '',
-                        errorText
-                    })
-                ));
-            }
-        } else {
-            log.error(`
-                Value returned from validator must be a 
-                boolean representing valid/invalid, a string representing errorText, or a promise for performing async 
-                validation. Got ${typeof validationResult} instead.
-            `);
-        }
-
-        return result;
-    }, {});
-
-    if (anyAsync) {
-        dispatch(validating(inputConfig, true));
-    }
-    setInput(inputConfig, changes, suppressChange)(dispatch, getState);
-
-    return new Promise((resolve, reject) => {
-        Promise.all(promises).then(results => {
-            const resultObject = _assign({}, ...results);
-
-            if (anyAsync) {
-                dispatch(validating(inputConfig, false));
-            }
-            const erroredInputs = _haveErrors(resultObject);
-            if (erroredInputs) {
-                reject(erroredInputs);
-            } else {
-                resolve(resultObject);
-            }
-        });
-    });
 }
 
 function _haveErrors(inputs) {
@@ -184,8 +102,9 @@ export function setInput(inputConfig, update, suppressChange) {
     };
 }
 
-export function resetInputs(inputConfig) {
-    return setInput(inputConfig, getDefaultInputs(inputConfig));
+export function resetInputs(inputConfig, inputKeys) {
+    const update = getDefaultInputs(inputConfig);
+    return setInput(inputConfig, inputKeys ? _pick(update, inputKeys) : update);
 }
 
 /**
@@ -195,7 +114,7 @@ export function resetInputs(inputConfig) {
  * @param inputKeys {Array}
  * @returns {Thunk}
  */
-export function validateInputs(inputConfig, inputKeys) {
+export function validateInputs(inputConfig, inputKeys, suppressChange) {
     return (dispatch, getState) => {
         const inputsState = _getInputsStateFromGlobal(inputConfig, getState());
         const keys = inputKeys || _keys(inputsState);
@@ -209,7 +128,7 @@ export function validateInputs(inputConfig, inputKeys) {
             }
             return result;
         }, {});
-        return updateAndValidate(inputConfig, inputsToValidate)(dispatch, getState);
+        return updateAndValidate(inputConfig, inputsToValidate, suppressChange)(dispatch, getState);
     };
 }
 
@@ -221,7 +140,90 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
             return Promise.resolve();
         }
 
-        // Return promise from validate
-        return _validate(inputConfig, inputs, getState(), dispatch, getState, suppressChange);
+        const state = getState();
+        const inputsState = _getInputsStateFromGlobal(inputConfig, state);
+        const promises = [];
+        let anyAsync = false;
+
+        const changes = _reduce(inputs, (result, value, key) => {
+            const { validator } = inputConfig[key];
+
+            const validationResult = validator ? validator(value, inputsState, state, dispatch) : true,
+                prev = inputsState[key] && inputsState[key].value,
+                unchanged = _isEqual(prev, value),
+                hasAsync = typeof validationResult === 'object' && !!validationResult.then;
+
+            const dispatchAndReturnPromiseResult = inputState =>
+                setInput(inputConfig, { [key]: inputState }, suppressChange)(dispatch, getState);
+
+            if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
+                const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
+                    value: value,
+                    validating: hasAsync && !unchanged // Will be validating if async validator exists
+                }) : ({ // False returned, input invalid
+                    value: prev,
+                    error: value || '',
+                    validating: false
+                });
+
+
+                // Add errorText if validator returned a string
+                if (typeof validationResult === 'string') {
+                    change.errorText = validationResult;
+                }
+
+                result[key] = change;
+
+                if (!hasAsync || unchanged) {
+                    promises.push(Promise.resolve({ [key]: change }));
+                } else {
+                    anyAsync = true;
+                    // Kick off async
+                    promises.push(validationResult.then(
+                        // Passed validation
+                        () => dispatchAndReturnPromiseResult({ value }),
+                        // Failed validation
+                        errorText => dispatchAndReturnPromiseResult({
+                            value: prev,
+                            error: value || '',
+                            errorText
+                        })
+                    ));
+                }
+            } else {
+                log.error(`
+                Value returned from validator must be a 
+                boolean representing valid/invalid, a string representing errorText, or a promise for performing async 
+                validation. Got ${typeof validationResult} instead.
+            `);
+            }
+
+            return result;
+        }, {});
+
+        if (anyAsync) {
+            dispatch(validating(inputConfig, true));
+        }
+        setInput(inputConfig, changes, suppressChange)(dispatch, getState);
+
+        return new Promise((resolve, reject) => {
+            Promise.all(promises).then(results => {
+                const resultObject = _assign({}, ...results);
+
+                if (anyAsync) {
+                    dispatch(validating(inputConfig, false));
+                }
+                const erroredInputs = _haveErrors(resultObject);
+                if (erroredInputs) {
+                    reject(erroredInputs);
+                } else {
+                    resolve(resultObject);
+                }
+            });
+        });
     };
+}
+
+export function initializeInputs(inputconfig, update) {
+    return updateAndValidate(inputconfig, update, true);
 }
