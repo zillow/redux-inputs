@@ -1,10 +1,12 @@
 import connect from 'react-redux';
 import invariant from 'invariant';
 import _mapValues from 'lodash/mapValues';
-import _omit from 'lodash/omit';
 import _property from 'lodash/property';
+import _reduce from 'lodash/reduce';
+import _isEmpty from 'lodash/isEmpty';
 
 import { updateAndValidate } from '../actions';
+import { createFormSelector } from './selectors';
 
 export const FORM_KEY = '_form';
 export const DEFAULT_REDUX_MOUNT_POINT = 'inputs';
@@ -14,10 +16,29 @@ export function getReduxMountPoint(inputConfig) {
     return (formConfig && formConfig.reduxMountPoint) || DEFAULT_REDUX_MOUNT_POINT;
 }
 
+export function getInputsFromState(inputConfig, state) {
+    const mountPoint = getReduxMountPoint(inputConfig);
+
+    const inputsState = _property(mountPoint)(state);
+    invariant(inputsState, `[redux-inputs]: no state found at '${mountPoint}', check your reducers to make sure it exists or change reduxMountPoint in your inputConfig.`);
+    return inputsState;
+}
+
 // Takes the state of inputs from redux and turns it into an object of input key -> value pairs,
 // excluding the _form property
 export function mapInputValues(inputs, iteratee = i => i.value) {
-    return _mapValues(_omit(inputs, FORM_KEY), iteratee);
+    return _mapValues(inputs, iteratee);
+}
+
+export function inputsHaveErrors(inputs) {
+    const erroredInputs = _reduce(inputs, (result, input, key) => {
+        if (typeof input.error !== 'undefined') {
+            result[key] = input;
+        }
+        return result;
+    }, {});
+
+    return _isEmpty(erroredInputs) ? false : erroredInputs;
 }
 
 /**
@@ -73,6 +94,7 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         connect: connect,
         ...options
     };
+    const formSelector = createFormSelector(inputConfig);
     return (
         mapStateToProps = i => i,
         mapDispatchToProps = dispatch => ({ dispatch }),
@@ -88,6 +110,7 @@ export const connectWithInputs = (inputConfig, options = {}) => {
             [opts.inputPropsKey]: _getInputProps(
                 _property(getReduxMountPoint(inputConfig))(stateProps) // Get inputs state from global state
             ),
+            [opts.formKey]: formSelector(stateProps),
             ...mergeProps(stateProps, dispatchProps, ownProps)
         }),
         connectOptions

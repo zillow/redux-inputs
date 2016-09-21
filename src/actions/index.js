@@ -4,22 +4,17 @@ import _reduce from 'lodash/reduce';
 import _forEach from 'lodash/forEach';
 import _isEmpty from 'lodash/isEmpty';
 import _keys from 'lodash/keys';
-import _property from 'lodash/property';
 import _isEqual from 'lodash/isEqual';
-import invariant from 'invariant';
 
-import { SET_INPUT, VALIDATING } from './actionTypes';
-import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
+import { SET_INPUT } from './actionTypes';
+import {
+    FORM_KEY,
+    getReduxMountPoint,
+    getInputsFromState,
+    inputsHaveErrors
+} from '../util/helpers';
 import log from '../util/log';
 import { getDefaultInputs } from '../reducers';
-
-function _getInputsStateFromGlobal(inputConfig, state) {
-    const mountPoint = getReduxMountPoint(inputConfig);
-
-    const inputsState = _property(mountPoint)(state);
-    invariant(inputsState, `[redux-inputs]: no state found at '${mountPoint}', check your reducers to make sure it exists or change reduxMountPoint in your inputConfig.`);
-    return inputsState;
-}
 
 function _filterUnknownInputs(inputConfig, inputs) {
     // Only update known inputs
@@ -33,17 +28,6 @@ function _filterUnknownInputs(inputConfig, inputs) {
     }, {});
 }
 
-function _haveErrors(inputs) {
-    const erroredInputs = _reduce(inputs, (result, input, key) => {
-        if (typeof input.error !== 'undefined') {
-            result[key] = input;
-        }
-        return result;
-    }, {});
-
-    return _isEmpty(erroredInputs) ? false : erroredInputs;
-}
-
 // Creates actions with meta information attached
 function _createActionWithMeta(inputConfig, action) {
     return {
@@ -54,18 +38,11 @@ function _createActionWithMeta(inputConfig, action) {
     };
 }
 
-export function validating(inputConfig, force) {
-    return _createActionWithMeta(inputConfig, {
-        type: VALIDATING,
-        payload: force
-    });
-}
-
 export function _setInput(inputConfig, update) {
     return _createActionWithMeta(inputConfig, {
         type: SET_INPUT,
         payload: update,
-        error: !!_haveErrors(update)
+        error: !!inputsHaveErrors(update)
     });
 }
 
@@ -95,7 +72,7 @@ export function setInput(inputConfig, update, suppressChange) {
         dispatch(_setInput(inputConfig, update));
         if (!suppressChange) {
             const state = getState();
-            const inputsState = _getInputsStateFromGlobal(inputConfig, state);
+            const inputsState = getInputsFromState(inputConfig, state);
             _fireChanges(inputConfig, update, inputsState, state, dispatch);
         }
         return Promise.resolve(update);
@@ -116,7 +93,7 @@ export function resetInputs(inputConfig, inputKeys) {
  */
 export function validateInputs(inputConfig, inputKeys, suppressChange) {
     return (dispatch, getState) => {
-        const inputsState = _getInputsStateFromGlobal(inputConfig, getState());
+        const inputsState = getInputsFromState(inputConfig, getState());
         const keys = inputKeys || _keys(inputsState);
         const inputsToValidate = _reduce(keys, (result, key) => {
             if (key === FORM_KEY) {
@@ -141,9 +118,8 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
         }
 
         const state = getState();
-        const inputsState = _getInputsStateFromGlobal(inputConfig, state);
+        const inputsState = getInputsFromState(inputConfig, state);
         const promises = [];
-        let anyAsync = false;
 
         const changes = _reduce(inputs, (result, value, key) => {
             const { validator } = inputConfig[key];
@@ -177,7 +153,6 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
                 if (!hasAsync || unchanged) {
                     promises.push(Promise.resolve({ [key]: change }));
                 } else {
-                    anyAsync = true;
                     // Kick off async
                     promises.push(validationResult.then(
                         // Passed validation
@@ -201,19 +176,13 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
             return result;
         }, {});
 
-        if (anyAsync) {
-            dispatch(validating(inputConfig, true));
-        }
         setInput(inputConfig, changes, suppressChange)(dispatch, getState);
 
         return new Promise((resolve, reject) => {
             Promise.all(promises).then(results => {
                 const resultObject = _assign({}, ...results);
 
-                if (anyAsync) {
-                    dispatch(validating(inputConfig, false));
-                }
-                const erroredInputs = _haveErrors(resultObject);
+                const erroredInputs = inputsHaveErrors(resultObject);
                 if (erroredInputs) {
                     reject(erroredInputs);
                 } else {

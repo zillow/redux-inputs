@@ -5,7 +5,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT, VALIDATING } from '../src/actions/actionTypes';
-import { _setInput, setInput, validating, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
+import { _setInput, setInput, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
@@ -35,7 +35,6 @@ describe('createInputsReducer', () => {
             let reducer = fn();
             let state = reducer();
             expect(state).to.deep.equal({
-                _form: {},
                 ...initialState
             })
         });
@@ -54,7 +53,6 @@ describe('createInputsReducer', () => {
                 }
             });
             expect(state).to.deep.equal({
-                _form: {},
                 email: { value: 'test@test.com' }
             });
         });
@@ -69,7 +67,6 @@ describe('createInputsReducer', () => {
                 }
             });
             expect(state).to.deep.equal({
-                _form: {},
                 ...initialState,
                 name: { value: 'test' }
             });
@@ -88,7 +85,6 @@ describe('createInputsReducer', () => {
                 }
             });
             expect(state).to.deep.equal({
-                _form: {},
                 email: { value: 'test@test.com' },
                 name: { value: 'test' }
             });
@@ -103,7 +99,6 @@ describe('createInputsReducer', () => {
                 phone: { value: 123 }
             });
             expect(state).to.deep.equal({
-                _form: {},
                 email: { value: undefined },
                 name: { value: 'test' },
                 phone: { value: 123 }
@@ -117,9 +112,7 @@ describe('createInputsReducer', () => {
             });
 
             let state = reducer();
-            expect(state).to.deep.equal({
-                _form: {}
-            });
+            expect(state).to.deep.equal({});
 
             state = reducer(state, {
                 type: SET_INPUT,
@@ -130,9 +123,7 @@ describe('createInputsReducer', () => {
                     reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT
                 }
             });
-            expect(state).to.deep.equal({
-                _form: {}
-            });
+            expect(state).to.deep.equal({});
 
             state = reducer(state, {
                 type: SET_INPUT,
@@ -144,7 +135,6 @@ describe('createInputsReducer', () => {
                 }
             });
             expect(state).to.deep.equal({
-                _form: {},
                 email: { value: 'test@test.com' }
             });
         });
@@ -169,7 +159,6 @@ describe('createInputsReducer', () => {
             let reducer = fn();
             let state = reducer();
             expect(state).to.deep.equal({
-                _form: {},
                 ...initialState
             })
         });
@@ -188,7 +177,6 @@ describe('createInputsReducer', () => {
                 }
             });
             expect(state).to.deep.equal({
-                _form: {},
                 positiveNumber: { value: 1 }
             });
         });
@@ -353,17 +341,6 @@ describe('resetInputs thunk', () => {
     });
 });
 
-describe('validating thunk', () => {
-    it('should create a valid VALIDATING action', () => {
-        let action = validating({}, true);
-        expect(action).to.deep.equal({
-            type: VALIDATING,
-            payload: true,
-            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
-        });
-    });
-});
-
 describe('updateAndValidate thunk', () => {
     it('correctly dispatches client side validation changes when valid', () => {
         let thunk = updateAndValidate({
@@ -508,10 +485,6 @@ describe('updateAndValidate thunk', () => {
     });
     it('correctly dispatches async validation VALID changes', () => {
         const expectedActions = [{
-            meta: {reduxMountPoint: "inputs"},
-            payload: true,
-            type: "RI_VALIDATING"
-        }, {
             error: false,
             meta: { reduxMountPoint: "inputs" },
             payload: { email: { validating: true, value: "test@test.com" }},
@@ -521,10 +494,6 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: "inputs" },
             payload: { email: { value: "test@test.com" }},
             type: "RI_SET_INPUT"
-        }, {
-            meta: {reduxMountPoint: "inputs"},
-            payload: false,
-            type: "RI_VALIDATING"
         }];
         const store = mockStore({ inputs: {} });
         const thunk = updateAndValidate({
@@ -546,10 +515,6 @@ describe('updateAndValidate thunk', () => {
     });
     it('correctly dispatches async validation INVALID changes', () => {
         const expectedActions = [{
-            meta: {reduxMountPoint: "inputs"},
-            payload: true,
-            type: "RI_VALIDATING"
-        }, {
             error: false,
             meta: { reduxMountPoint: "inputs" },
             payload: { email: { validating: true, value: "test@test.com" }},
@@ -563,10 +528,6 @@ describe('updateAndValidate thunk', () => {
                 value: undefined
             }},
             type: "RI_SET_INPUT"
-        }, {
-            meta: {reduxMountPoint: "inputs"},
-            payload: false,
-            type: "RI_VALIDATING"
         }];
         const store = mockStore({ inputs: {} });
         const thunk = updateAndValidate({
@@ -615,17 +576,12 @@ describe('updateAndValidate thunk', () => {
                 }
             });
             expect(stubbedDispatch.getCall(0).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: true,
-                type: "RI_VALIDATING"
-            });
-            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
                 error: false,
                 meta: { reduxMountPoint: "inputs" },
                 payload: { email: { validating: true, value: "test@test.com" }},
                 type: "RI_SET_INPUT"
             });
-            expect(stubbedDispatch.getCall(2).args[0]).to.deep.equal({
+            expect(stubbedDispatch.getCall(1).args[0]).to.deep.equal({
                 error: true,
                 meta: { reduxMountPoint: "inputs" },
                 payload: { email: {
@@ -635,19 +591,10 @@ describe('updateAndValidate thunk', () => {
                 }},
                 type: "RI_SET_INPUT"
             });
-            expect(stubbedDispatch.getCall(3).args[0]).to.deep.equal({
-                meta: { reduxMountPoint: "inputs" },
-                payload: false,
-                type: "RI_VALIDATING"
-            });
         });
     });
     it('correctly dispatches mixed client + async validation VALID changes', () => {
         const expectedActions = [{
-            meta: {reduxMountPoint: "inputs"},
-            payload: true,
-            type: "RI_VALIDATING"
-        }, {
             error: false,
             meta: { reduxMountPoint: "inputs" },
             payload: {
@@ -660,10 +607,6 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: "inputs" },
             payload: { email: { value: "test@test.com" }},
             type: "RI_SET_INPUT"
-        }, {
-            meta: {reduxMountPoint: "inputs"},
-            payload: false,
-            type: "RI_VALIDATING"
         }];
         const store = mockStore({ inputs: {} });
         const thunk = updateAndValidate({
@@ -690,10 +633,6 @@ describe('updateAndValidate thunk', () => {
     });
     it('correctly dispatches mixed invalid client + valid async validation changes', () => {
         const expectedActions = [{
-            meta: {reduxMountPoint: "inputs"},
-            payload: true,
-            type: "RI_VALIDATING"
-        }, {
             error: true,
             meta: { reduxMountPoint: "inputs" },
             payload: {
@@ -706,10 +645,6 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: "inputs" },
             payload: { email: { value: "test@test.com" }},
             type: "RI_SET_INPUT"
-        }, {
-            meta: {reduxMountPoint: "inputs"},
-            payload: false,
-            type: "RI_VALIDATING"
         }];
         const store = mockStore({ inputs: {} });
         const thunk = updateAndValidate({
@@ -735,10 +670,6 @@ describe('updateAndValidate thunk', () => {
     });
     it('correctly dispatches mixed valid client + invalid async validation changes', () => {
         const expectedActions = [{
-            meta: {reduxMountPoint: "inputs"},
-            payload: true,
-            type: "RI_VALIDATING"
-        }, {
             error: false,
             meta: { reduxMountPoint: "inputs" },
             payload: {
@@ -751,10 +682,6 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: "inputs" },
             payload: { email: { error: "test@test.com", errorText: undefined, value: undefined }},
             type: "RI_SET_INPUT"
-        }, {
-            meta: {reduxMountPoint: "inputs"},
-            payload: false,
-            type: "RI_VALIDATING"
         }];
         const store = mockStore({ inputs: {} });
         const thunk = updateAndValidate({
@@ -780,10 +707,6 @@ describe('updateAndValidate thunk', () => {
     });
     it('should fire onChange for changed inputs', () => {
         const expectedActions = [{
-            meta: {reduxMountPoint: "inputs"},
-            payload: true,
-            type: "RI_VALIDATING"
-        }, {
             type: SET_INPUT,
             payload: {
                 email: {
@@ -802,10 +725,6 @@ describe('updateAndValidate thunk', () => {
             },
             error: false,
             meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
-        }, {
-            meta: {reduxMountPoint: "inputs"},
-            payload: false,
-            type: "RI_VALIDATING"
         }];
         const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
         const onChangeSpy = sinon.spy();
@@ -938,6 +857,12 @@ describe('connectWithInputs', () => {
         expect(finalProps.inputProps).to.exist;
         expect(finalProps.inputs).to.deep.equal({
             email: { value: 'test@test.com' }
+        });
+        expect(finalProps.form).to.deep.equal({
+            values: {
+                email: 'test@test.com'
+            },
+            validating: false
         });
         expect(finalProps.dispatch).to.exist;
 

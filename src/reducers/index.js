@@ -5,7 +5,7 @@ import invariant from 'invariant';
 
 import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
 
-import { SET_INPUT, VALIDATING } from '../actions/actionTypes';
+import { SET_INPUT } from '../actions/actionTypes';
 
 function getDefaultInputState(config) {
     return { value: config.defaultValue };
@@ -13,12 +13,6 @@ function getDefaultInputState(config) {
 
 export function getDefaultInputs(inputConfig) {
     return _mapValues(_omit(inputConfig, FORM_KEY), getDefaultInputState);
-}
-
-export function getDefaultInputObject(inputConfig) {
-    let inputs = getDefaultInputs(inputConfig);
-    inputs[FORM_KEY] = {}; // _form property should always exist in state
-    return inputs;
 }
 
 function _matchesReduxMountPoint(inputConfig, action) {
@@ -36,10 +30,6 @@ function _syncStateWithInputConfig(inputConfig, state) {
         }
     });
 
-    if (!state[FORM_KEY]) {
-        state[FORM_KEY] = {};
-    }
-
     return nsync ? state : {
         ...otherInputs,
         ...state
@@ -48,21 +38,13 @@ function _syncStateWithInputConfig(inputConfig, state) {
 
 export function createInputsReducer(inputConfig) {
     invariant(inputConfig, '[redux-inputs]: inputConfig must be defined');
-    return (state = getDefaultInputObject(inputConfig), action = {}) => {
+    return (state = getDefaultInputs(inputConfig), action = {}) => {
         if (_matchesReduxMountPoint(inputConfig, action)) {
             switch (action.type) {
                 case SET_INPUT:
                     return {
                         ...state,
                         ...action.payload
-                    };
-                case VALIDATING:
-                    return {
-                        ...state,
-                        [FORM_KEY]: {
-                            ...state[FORM_KEY],
-                            validating: action.payload
-                        }
                     };
             }
         }
