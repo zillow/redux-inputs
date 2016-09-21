@@ -40,7 +40,9 @@ export const getInputProps = (inputConfig, inputsState, dispatch) => (
             error: hasError,
 
             // Prebound change callback
-            dispatchChange: update => dispatch(updateAndValidate(inputConfig, update)),
+            dispatchChange: newVal => dispatch(updateAndValidate(inputConfig, {
+                [id]: newVal
+            })),
 
             // Props from config
             ...config.props,
@@ -63,10 +65,11 @@ export const getInputProps = (inputConfig, inputsState, dispatch) => (
  * @returns `connect` function
  */
 export const connectWithInputs = (inputConfig, options = {}) => {
-    const { inputPropsKey } = {
+    const opts = {
         // Defaults
         inputPropsKey: 'inputProps',
         inputActionsKey: 'inputActions',
+        connect: connect,
         ...options
     };
     return (
@@ -74,14 +77,14 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         mapDispatchToProps = dispatch => ({ dispatch }),
         mergeProps = (stateProps, dispatchProps, ownProps) => ({ ...stateProps, ...dispatchProps, ...ownProps }),
         connectOptions = {}
-    ) => Component => connect(
+    ) => Component => opts.connect(
         mapStateToProps,
         (dispatch, ownProps) => ({
             _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch),
             ...mapDispatchToProps(dispatch, ownProps)
         }),
         (stateProps, { _getInputProps, ...dispatchProps }, ownProps) => ({
-            [inputPropsKey]: _getInputProps(
+            [opts.inputPropsKey]: _getInputProps(
                 _property(getReduxMountPoint(inputConfig))(stateProps) // Get inputs state from global state
             ),
             ...mergeProps(stateProps, dispatchProps, ownProps)

@@ -3,13 +3,10 @@ import _identity from 'lodash/identity';
 import getDisplayName from 'react-display-name';
 
 export const createOnChangeWithTransform = (
-    _id,
     dispatchChange,
     onChangeTransform = _identity,
     parser = _identity
-) => e => dispatchChange({
-    [_id]: parser(onChangeTransform(e))
-});
+) => e => dispatchChange(parser(onChangeTransform(e)));
 
 /**
  * Higher order component that wraps a given input to be compatible with redux-inputs
@@ -46,7 +43,7 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
             <WrappedComponent id={id || _id}
                               value={formatter ? formatter(value) : value}
                              // onChange function to take an event facade, dispatch a change event
-                              onChange={createOnChangeWithTransform(_id, dispatchChange, onChangeTransform, parser)}
+                              onChange={createOnChangeWithTransform(dispatchChange, onChangeTransform, parser)}
                               {...otherProps}/>
         );
     };
@@ -73,7 +70,7 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
          */
         formatter: React.PropTypes.func,
         /**
-         * Private id - from getInputProps, returns a promise
+         * Private function from getInputProps, returns a promise
          */
         dispatchChange: React.PropTypes.func.isRequired
     };

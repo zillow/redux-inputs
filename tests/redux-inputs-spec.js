@@ -6,7 +6,7 @@ import thunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT, VALIDATING } from '../src/actions/actionTypes';
 import { _setInput, setInput, validating, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
-import { DEFAULT_REDUX_MOUNT_POINT, getInputProps } from '../src/util/helpers';
+import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
 const mockStore = configureMockStore([thunk]);
@@ -268,7 +268,8 @@ describe('setInput thunk', () => {
         const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
         const thunk = setInput({
             email: {
-                onChange: (inputState, inputs, state) => {
+                onChange: (inputState, inputs, state, dispatch) => {
+                    expect(typeof dispatch).to.equal('function');
                     expect(inputState).to.deep.equal({ value: 'test@test.com' });
                     expect(inputs).to.deep.equal({
                         email: { value: 'storevalue' }
@@ -895,6 +896,63 @@ describe('validateInputs thunk', () => {
     });
 });
 
+describe('connectWithInputs', () => {
+    it('adds all the right props', () => {
+        const connectStub = sinon.stub();
+        const connectOutput = sinon.stub();
+
+        connectStub.returns(connectOutput);
+
+        const Component = connectWithInputs({
+            email: {}
+        }, {
+            connect: connectStub
+        })(i => i)(() => <div></div>);
+        expect(connectStub.calledOnce).to.be.true;
+        const initialProps = {
+            inputs: {
+                email: {
+                    value: 'test@test.com'
+                }
+            }
+        }
+        const store = mockStore({ inputs: { email: { value: 'test@test.com' } } })
+        const mapStateToProps = connectStub.args[0][0];
+        const mapDispatchToProps = connectStub.args[0][1];
+        const mergeProps = connectStub.args[0][2];
+
+        const stateProps = mapStateToProps(initialProps);
+        const dispatchProps = mapDispatchToProps(store.dispatch, initialProps);
+        const finalProps = mergeProps(stateProps, dispatchProps, initialProps);
+
+        expect(finalProps.inputProps).to.exist;
+        expect(finalProps.inputs).to.deep.equal({
+            email: { value: 'test@test.com' }
+        });
+        expect(finalProps.dispatch).to.exist;
+
+        finalProps.inputProps.email.dispatchChange('new@test.com').then((inputs) => {
+            expect(inputs).to.deep.equal({
+                email: {
+                    value: 'new@test.com',
+                    validating: false
+                }
+            });
+            expect(store.getActions()).to.deep.equal([{
+                type: SET_INPUT,
+                payload: {
+                    email: {
+                        value: 'test@test.com',
+                        validating: false
+                    }
+                },
+                error: false,
+                meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+            }]);
+        });
+    });
+});
+
 const noop = () => {};
 describe('getInputProps', () => {
     const basicInputConfig = { email: {} };
@@ -951,26 +1009,26 @@ describe('createOnChangeWithTransform', () => {
     });
     it('returned function runs onChangeTransform on the given event', () => {
         const onChangeTransform = sinon.spy();
-        const actual = createOnChangeWithTransform('id', promiseThunk, onChangeTransform);
+        const actual = createOnChangeWithTransform(promiseThunk, onChangeTransform);
         actual('val');
         expect(onChangeTransform.calledWith('val')).to.be.true;
     });
     it('returned function runs parser on the onChangeTransform value', () => {
         const parser = sinon.spy();
-        const actual = createOnChangeWithTransform('id', promiseThunk, () => 'val2', parser);
+        const actual = createOnChangeWithTransform(promiseThunk, () => 'val2', parser);
         actual('val');
         expect(parser.calledWith('val2')).to.be.true;
     });
     it('returned function calls dispatchChange with an object with parsed value', () => {
         const dispatchChange = sinon.spy(promiseThunk);
-        const actual = createOnChangeWithTransform('email', dispatchChange, () => 'val2');
+        const actual = createOnChangeWithTransform(dispatchChange, () => 'val2');
         actual('val');
         expect(dispatchChange.calledOnce).to.be.true;
         const args = dispatchChange.args[0];
-        expect(args[0]).to.deep.equal({ email: 'val2' });
+        expect(args[0]).to.deep.equal('val2');
     });
     it('returned function returns a promise', () => {
-        const onChange = createOnChangeWithTransform('id', promiseThunk);
+        const onChange = createOnChangeWithTransform(promiseThunk);
         const actual = onChange('val');
         expect(actual.then).to.be.a('function');
     });
