@@ -22,10 +22,10 @@ export { createInputsReducer } from './reducers';
  * Action creators and thunks
  */
 export {
-    setInput,
+    setInputs,
     validateInputs,
     updateAndValidate,
-    validating,
+    initializeInputs,
     resetInputs
 } from './actions';
 

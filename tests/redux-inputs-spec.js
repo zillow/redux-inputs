@@ -5,7 +5,7 @@ import configureMockStore from 'redux-mock-store';
 import reduxThunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT } from '../src/actions/actionTypes';
-import { _setInput, setInput, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
+import { _setInputs, setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
@@ -180,9 +180,9 @@ describe('createInputsReducer', () => {
     });
 });
 
-describe('_setInput action creator', () => {
+describe('_setInputs action creator', () => {
     it('should create a valid SET_INPUT action', () => {
-        let action = _setInput({}, {
+        let action = _setInputs({}, {
             email: { value: 'test@test.com' }
         });
         expect(action).to.deep.equal({
@@ -193,7 +193,7 @@ describe('_setInput action creator', () => {
         });
     });
     it('should set error correctly on errored payload', () => {
-        let action = _setInput({}, {
+        let action = _setInputs({}, {
             email: { error: 'test@test.com' }
         });
         expect(action).to.deep.equal({
@@ -204,7 +204,7 @@ describe('_setInput action creator', () => {
         });
     });
     it('should set reduxMountPoint meta information based on inputConfig settings', () => {
-        let action = _setInput({
+        let action = _setInputs({
             // Input Config
             _form: {
                 reduxMountPoint: 'alternate'
@@ -221,9 +221,9 @@ describe('_setInput action creator', () => {
     });
 });
 
-describe('setInput thunk', () => {
+describe('setInputs thunk', () => {
     it('should create a valid SET_INPUT action', () => {
-        const thunk = setInput({
+        const thunk = setInputs({
             email: {}
         }, {
             email: { value: 'test@test.com' }
@@ -251,7 +251,7 @@ describe('setInput thunk', () => {
             meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
         }];
         const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
-        const thunk = setInput({
+        const thunk = setInputs({
             email: {
                 onChange: (inputState, inputs, state, dispatch) => {
                     expect(typeof dispatch).to.equal('function');
@@ -294,7 +294,7 @@ describe('setInput thunk', () => {
         }];
         const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
         const onChangeSpy = sinon.spy();
-        const thunk = setInput({
+        const thunk = setInputs({
             email: {
                 onChange: onChangeSpy
             }

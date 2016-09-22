@@ -59,7 +59,7 @@ other redux state specified:
 - `inputProps` *{Object}* contains props for each input in the inputConfig
 
 - `inputActions` *{Object}*
-    - `inputActions.setInput(newState, meta)`
+    - `inputActions.setInputs(newState, meta)`
     - `inputActions.updateAndValidate(changes, meta)`
     - `inputActions.validateInputs(inputKeys, meta)`
     - `inputActions.resetInputs(inputKeys, meta)`

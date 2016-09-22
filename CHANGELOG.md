@@ -7,13 +7,17 @@
     - Removed _form.metaCreator. This can be done via redux middleware instead.
 - ReduxInputsWrapper
     - Removed resolve/reject - not used much, didn't make sense on the component, replaced with inputConfig's `onChange`.
+- Renamed setInput -> setInputs for consistency 
 - Actions
-    - setInput and resetInputs are now thunks instead of plain action creators, to support `onChange`. 
+    - setInputs and resetInputs are now thunks instead of plain action creators, to support `onChange`. 
    
     
 ### Added
-- inputConfig
+- inputConfig 
     - `onChange(value, inputsState, state, dispatch)` callback 
+    
+- Actions
+    - `initializeInputs(inputConfig, update, meta)` - Just like updateAndValidate, but keeps inputs pristine
     
 - connectWithInputs - new helper function that wraps react-redux's connect and passes down form state, inputProps, 
     and pre-bound inputActions to connected components.
