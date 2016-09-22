@@ -3,21 +3,6 @@
 [![Build Status](https://travis-ci.org/zillow/redux-inputs.svg?branch=master)](https://travis-ci.org/zillow/redux-inputs)
 
 `redux-inputs` works with redux to validate and store values from inputs and forms.
-It primarily consists of a redux reducer creator function and function to get
- a set of properties to be used by input components.
-Both the reducer and input props creator take a inputConfig object that defines how inputs
- are initialized and validated.
-
-### Example
-
-    const inputConfig = {
-        homePrice: {
-            defaultValue: 300000,
-            validator: (value) => value > 0 && value < 350000000
-        }
-    }
-
-[*View the `inputConfig` API here*](INPUTCONFIG.md)
 
 ## Installation
 
@@ -32,18 +17,20 @@ Add [redux-thunk](https://github.com/gaearon/redux-thunk) middleware to your sto
 
 ### Step 2 - Config
 
+Both the reducer and input props creator take a inputConfig object that defines how inputs are initialized and validated.
+
+### Example
+
+    const inputConfig = {
+        homePrice: {
+            defaultValue: 300000,
+            validator: (value) => value > 0 && value < 350000000
+        }
+    }
+
 Create an input configuration object and add a redux-inputs reducer to your redux store in your project's reducers file.
 
 [*View the `inputConfig` properties here*](INPUTCONFIG.md)
-
-Create your inputsConfig object
-
-    const inputsConfig = {
-        email: {
-            validator: (input) => input && input.length > 3
-        }
-    };
-    
     
 ### Step 3 - Reducer
 
@@ -64,7 +51,25 @@ Give redux-inputs reducer to Redux in your project's reducers file.
     YourForm = connectWithInputs(inputConfig)()(YourForm);
     
 Connect your form with `connectWithInputs`, which takes the `inputConfig` and creates a function that has the same 
-interface as react-redux's `connect`. This will pass down additional props to your component including `inputProps`.
+interface as react-redux's `connect`. This will pass down these additional props to your component, in addition to any 
+other redux state specified:
+
+#### Props
+
+- `inputProps` *{Object}* contains props for each input in the inputConfig
+
+- `inputActions` *{Object}*
+    - `inputActions.setInput(newState, meta)`
+    - `inputActions.updateAndValidate(changes, meta)`
+    - `inputActions.validateInputs(inputKeys, meta)`
+    - `inputActions.resetInputs(inputKeys, meta)`
+    - `inputActions.initializeInputs(changes, meta)`
+    
+- `form` *{Object}*
+    - `form.values` *{Object}* key-value pairs of the values of all inputs
+    - `form.validating` *{Boolean}* true if any inputs are currently async validating
+    - `form.pristine` *{Boolean}* true if all inputs are untouched, reset, or initialized.
+    
 
 ### Step 5 - Wrapper
 
@@ -90,19 +95,21 @@ conform to the same API, and be easily understood and swapped out.
 
 - parser *(function)*
 - formatter *(function)*
-- errorFormatter ?
 
 
-    let Input = ({id, value, error, onChange}) => (
+    import { ReduxInputsWrapper } from 'redux-inputs';
+
+    let Input = ({id, value, error, errorText, onChange}) => (
         <div>
             <input name={id} onChange={(e) => onChange(e.target.value)}/>
-            {error ? <div>Invalid input</div> : null} 
+            {error ? <div>{errorText}</div> : null} 
         </div>
     );
-    Input = InputsWrapper(Input);
+    Input = ReduxInputsWrapper(Input);
     
-The `InputsWrapper` looks at the state and turns it into `value`, and `error` props, where `value` is equal to 
-`inputs.email.value` if `inputs.email.error` is undefined, or `inputs.email.error` otherwise. The `InputsWrapper` 
+    
+The `ReduxInputsWrapper` looks at the state and turns it into `value`, and `error` props, where `value` is equal to 
+`inputs.email.value` if `inputs.email.error` is undefined, or `inputs.email.error` otherwise. The `ReduxInputsWrapper` 
 passes down any other properties of the input state untouched.
 Then this input can be used in the render of connected `YourForm` like this:
     
@@ -115,12 +122,6 @@ Then this input can be used in the render of connected `YourForm` like this:
     }
     
 Changes from this input will be validated and dispatched, then passed back through component update.
-
-## Form state
-
- - formValidating *(boolean)*
- - formPristine *(boolean)*
- - formHasError *(boolean)*
 
 ## Redux state shape
 
@@ -177,12 +178,11 @@ function Form(props) {
         <form>
             <EmailInput {...inputProps.email}/>
             <h3>Input state</h3>
-            <pre>{JSON.stringify(inputs, null, 2)}</pre>      
+            <pre>{JSON.stringify(inputs, null, 2)}</pre>
         </form>
     )
 }
 const ConnectedForm = connectWithInputs({
-    mountPoint: 'inputs'
     inputConfig
 })(s => s)(Form);
 ReactDOM.render(<Provider store={store}><ConnectedForm /></Provider>, document.getElementById('container'));
@@ -220,7 +220,7 @@ Example change
 
 Same as updateInputs, but all inputs are still considered `pristine` after updating.
 
-### `setInputs(inputConfig, newInputState)`
+### `setInputs(inputConfig, newInputState, meta)`
 
 Creates an action that sets inputs state directly without validation.
 
@@ -253,11 +253,21 @@ reject function is passed the input states of inputs that are invalid
 - `inputKeys` *(Array)* [optional] Array of input keys found in inputConfig. If no inputKeys are given, validates all inputs found in inputConfig.
 - `meta` *(Object)* [optional] extra meta information to add to the action object(s)
 
-### `resetInputs(inputConfig, meta)`
+### `resetInputs(inputConfig, inputKeys, meta)`
 
-Returns an action that when dispatched will reset the form values associated with the given inputConfig to their default values. 
+Returns an action that when dispatched will reset the form values associated with the given inputConfig to their `defaultValue`. 
 
-Note on `meta` parameter: adding `suppressChange` to the meta object for any action creator will skip any `onChange` callbacks in the inputConfig.
+#### Arguments
+- `inputConfig` *(Object)*
+- `inputKeys` *(Array)* [optional] Array of input keys found in inputConfig. If no inputKeys are given, resets all inputs found in inputConfig.
+- `meta` *(Object)* [optional] extra meta information to add to the action object(s)
+
+### Note on `meta` parameter - There are some special properties available:
+ - `reduxMountPoint` - automatically added to every action fired, specifying which form it is associated with 
+ - `suppressChange` - adding this to the meta object for any action creator will skip any `onChange` callbacks in the inputConfig
+ - `validate` - included when running `validateInputs`
+ - `initialize` - included when running `intializeInputs`, sets all changed inputs to `pristine`
+ - `reset` - included when running `resetInputs`
 
 ## Contributing
 
@@ -267,10 +277,5 @@ Note on `meta` parameter: adding `suppressChange` to the meta object for any act
 
 ### Tests
 
+    gulp eslint
     npm test
-
-
-TODO: document exported action types
-TODO: calls during async validating?
-TODO: validating state
-TODO: pristine

@@ -15,6 +15,6 @@
 - inputConfig
     - `onChange(value, inputsState, state, dispatch)` callback 
     
-- connectWithInputs - new helper function that wraps react-redux's connect and passes down state, inputProps, 
+- connectWithInputs - new helper function that wraps react-redux's connect and passes down form state, inputProps, 
     and pre-bound inputActions to connected components.
     

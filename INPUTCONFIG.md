@@ -88,7 +88,7 @@ Function for firing actions after an input is validate and changed.
 
 ## Form Config
 
-You may set a `_form` property at the root of `inputConfig` to change some form-wide settings
+You may set a `_form` property at the root of `inputConfig` to change form-wide settings
 
 #### `reduxMountPoint` *(String)* change the key used to store redux-inputs state in the store. Defaults to `inputs`. If the input state is stored deeply in the state tree, this `can.be.dot.separated`.
 
