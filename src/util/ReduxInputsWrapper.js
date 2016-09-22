@@ -5,8 +5,10 @@ import getDisplayName from 'react-display-name';
 export const createOnChangeWithTransform = (
     dispatchChange,
     onChangeTransform = _identity,
-    parser = _identity
-) => e => dispatchChange(parser(onChangeTransform(e)));
+    parser = _identity,
+    resolve = _identity,
+    reject = _identity
+) => e => dispatchChange(parser(onChangeTransform(e))).then(resolve, reject);
 
 /**
  * Higher order component that wraps a given input to be compatible with redux-inputs
@@ -30,6 +32,8 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
         parser,
         formatter,
         dispatchChange,
+        resolve,
+        reject,
         ...otherProps
     }) => {
         const {
@@ -43,7 +47,7 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
             <WrappedComponent id={id || _id}
                               value={formatter ? formatter(value) : value}
                              // onChange function to take an event facade, dispatch a change event
-                              onChange={createOnChangeWithTransform(dispatchChange, onChangeTransform, parser)}
+                              onChange={createOnChangeWithTransform(dispatchChange, onChangeTransform, parser, resolve, reject)}
                               {...otherProps}/>
         );
     };
@@ -72,7 +76,15 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
         /**
          * Private function from getInputProps, returns a promise
          */
-        dispatchChange: React.PropTypes.func.isRequired
+        dispatchChange: React.PropTypes.func.isRequired,
+        /**
+         * Callback after successful validation and update
+         */
+        resolve: React.PropTypes.func,
+        /**
+         * Callback after failed validation
+         */
+        reject: React.PropTypes.func
     };
     return Wrapper;
 };

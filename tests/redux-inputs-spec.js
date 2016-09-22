@@ -973,6 +973,7 @@ describe('getInputProps', () => {
     const multiInputState = { email: { value: 1 }, name: { value: 4 } };
     const errorInputState = { email: { value: 1, error: 2 } };
     const errorTextState = { email: { value: 1, errorText: 'GANKSHARK' } };
+    const altMountInputConfig = { _form: { reduxMountPoint: 'alt' }, email: {}};
     it('returns objects with _id set', () => {
         const actual = getInputProps(basicInputConfig, basicInputState, noop);
         expect(actual.email._id).to.equal('inputs:email');
@@ -1010,6 +1011,10 @@ describe('getInputProps', () => {
     it('throws an invariant error when ids are not present in state', () => {
         const actualFn = () => getInputProps(multiInputConfig, basicInputState, noop);
         expect(actualFn).to.throw();
+    });
+    it('works with alternative mount points', () => {
+        const actual = getInputProps(altMountInputConfig, basicInputState, noop);
+        expect(actual.email._id).to.equal('alt:email');
     });
 });
 const promiseThunk = () => Promise.resolve();
@@ -1081,6 +1086,16 @@ describe('ReduxInputsWrapper', () => {
             const wrapped = ReduxInputsWrapper(Component);
             const rendered = wrapped({
                 _id: 'email', dispatchChange: noop,
+                id: 'overwrite',
+                value: 'logical',
+                formatter: () => 'formatted'
+            });
+            expect(rendered.props.id).to.equal('overwrite');
+        });
+        it('calls resolve after dispatching change', () => {
+            const wrapped = ReduxInputsWrapper(Component);
+            const rendered = wrapped({
+                _id: 'email', dispatchChange: Promise.resolve(),
                 id: 'overwrite',
                 value: 'logical',
                 formatter: () => 'formatted'

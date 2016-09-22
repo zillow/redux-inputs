@@ -11,7 +11,7 @@ import {
     FORM_KEY,
     getReduxMountPoint,
     getInputsFromState,
-    inputsHaveErrors
+    inputsWithErrors
 } from '../util/helpers';
 import log from '../util/log';
 import { getDefaultInputs } from '../reducers';
@@ -32,7 +32,7 @@ export function _setInputs(inputConfig, update, meta = {}) {
     return {
         type: SET_INPUT,
         payload: update,
-        error: !!inputsHaveErrors(update),
+        error: !!inputsWithErrors(update),
         meta: {
             reduxMountPoint: getReduxMountPoint(inputConfig),
             ...meta
@@ -188,7 +188,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
             Promise.all(promises).then(results => {
                 const resultObject = _assign({}, ...results);
 
-                const erroredInputs = inputsHaveErrors(resultObject);
+                const erroredInputs = inputsWithErrors(resultObject);
                 if (erroredInputs) {
                     reject(erroredInputs);
                 } else {

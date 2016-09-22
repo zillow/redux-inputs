@@ -93,8 +93,10 @@ conform to the same API, and be easily understood and swapped out.
 
 #### Props added to composed component
 
-- parser *(function)*
-- formatter *(function)*
+- parser *(function)* transforms the new value before validating and updating
+- formatter *(function)* transforms the stored value before passing to the component
+- resolve *(function)* callback after successful change - same as resolve of updateAndValidate
+- reject *(function)* callback after failed validation - same as reject of updateAndValidate
 
 
     import { ReduxInputsWrapper } from 'redux-inputs';
@@ -198,7 +200,7 @@ With this set up, you are able make changes to inputs and have them declarativel
 
 ## Action Creators/Thunks
 
-### `updateInputs(inputConfig, change, meta)`
+### `updateAndValidate(inputConfig, change, meta)`
 
 Thunk that validates change and dispatches `setInputs` to update inputs changed. Returns a Promise where the 
 resolve function is passed the input states of inputs that were validated and the 

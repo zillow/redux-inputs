@@ -1,10 +1,11 @@
 import { bindActionCreators } from 'redux';
-import connect from 'react-redux';
+import { connect } from 'react-redux';
 import invariant from 'invariant';
 import _mapValues from 'lodash/mapValues';
 import _property from 'lodash/property';
 import _reduce from 'lodash/reduce';
 import _isEmpty from 'lodash/isEmpty';
+import _omit from 'lodash/omit';
 
 import { bindActions, updateAndValidate } from '../actions';
 import { createInputsSelector, createFormSelector } from './selectors';
@@ -25,13 +26,7 @@ export function getInputsFromState(inputConfig, state) {
     return inputsState;
 }
 
-// Takes the state of inputs from redux and turns it into an object of input key -> value pairs,
-// excluding the _form property
-export function mapInputValues(inputs, iteratee = i => i.value) {
-    return _mapValues(inputs, iteratee);
-}
-
-export function inputsHaveErrors(inputs) {
+export function inputsWithErrors(inputs) {
     const erroredInputs = _reduce(inputs, (result, input, key) => {
         if (typeof input.error !== 'undefined') {
             result[key] = input;
@@ -49,7 +44,7 @@ export function inputsHaveErrors(inputs) {
  * @param dispatcher
  */
 export const getInputProps = (inputConfig, inputsState, dispatch) => (
-    mapInputValues(inputConfig, (config, id) => {
+    _mapValues(_omit(inputConfig, FORM_KEY), (config, id) => {
         const inputState = inputsState[id];
         invariant(inputState, `[redux-inputs]: ${id} not found in state. Make sure to configure your redux-input reducer.`);
 
