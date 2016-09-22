@@ -9,7 +9,7 @@ gulp.task('clean', function () {
 });
 
 gulp.task('eslint', function () {
-	return gulp.src('src/**/*.js')
+	return gulp.src(['src/**/*.js', 'tests/**/*.js'])
 		.pipe(eslint())
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());
