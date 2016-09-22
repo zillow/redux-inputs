@@ -874,6 +874,12 @@ describe('connectWithInputs', () => {
         const finalProps = mergeProps(stateProps, dispatchProps, initialProps);
 
         expect(finalProps.inputProps).to.exist;
+        expect(finalProps.inputActions).to.exist;
+        expect(typeof finalProps.inputActions.setInputs === 'function').to.be.true;
+        expect(typeof finalProps.inputActions.validateInputs === 'function').to.be.true;
+        expect(typeof finalProps.inputActions.updateAndValidate === 'function').to.be.true;
+        expect(typeof finalProps.inputActions.resetInputs === 'function').to.be.true;
+        expect(typeof finalProps.inputActions.initializeInputs === 'function').to.be.true;
         expect(finalProps.inputs).to.deep.equal({
             email: { value: 'test@test.com', pristine: true }
         });
@@ -886,7 +892,7 @@ describe('connectWithInputs', () => {
         });
         expect(finalProps.dispatch).to.exist;
 
-        finalProps.inputProps.email.dispatchChange('new@test.com').then((inputs) => {
+        return finalProps.inputProps.email.dispatchChange('new@test.com').then((inputs) => {
             expect(inputs).to.deep.equal({
                 email: {
                     value: 'new@test.com',
@@ -897,7 +903,57 @@ describe('connectWithInputs', () => {
                 type: SET_INPUT,
                 payload: {
                     email: {
-                        value: 'test@test.com',
+                        value: 'new@test.com',
+                        validating: false
+                    }
+                },
+                error: false,
+                meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+            }]);
+        });
+    });
+    it('inputActions are bound and working', () => {
+        const connectStub = sinon.stub();
+        const connectOutput = sinon.stub();
+
+        connectStub.returns(connectOutput);
+
+        connectWithInputs({
+            email: {}
+        }, {
+            connect: connectStub
+        })(i => i)(() => <div/>);
+
+        expect(connectStub.calledOnce).to.be.true;
+        const initialProps = {
+            inputs: {
+                email: {
+                    value: 'test@test.com',
+                    pristine: true
+                }
+            }
+        };
+        const store = mockStore({ inputs: { email: { value: 'test@test.com', pristine: true } } });
+        const mapStateToProps = connectStub.args[0][0];
+        const mapDispatchToProps = connectStub.args[0][1];
+        const mergeProps = connectStub.args[0][2];
+
+        const stateProps = mapStateToProps(initialProps);
+        const dispatchProps = mapDispatchToProps(store.dispatch, initialProps);
+        const finalProps = mergeProps(stateProps, dispatchProps, initialProps);
+
+        return finalProps.inputActions.updateAndValidate({ email: 'new@test.com' }).then((inputs) => {
+            expect(inputs).to.deep.equal({
+                email: {
+                    value: 'new@test.com',
+                    validating: false
+                }
+            });
+            expect(store.getActions()).to.deep.equal([{
+                type: SET_INPUT,
+                payload: {
+                    email: {
+                        value: 'new@test.com',
                         validating: false
                     }
                 },

@@ -1,3 +1,4 @@
+import { bindActionCreators } from 'redux';
 import connect from 'react-redux';
 import invariant from 'invariant';
 import _mapValues from 'lodash/mapValues';
@@ -107,11 +108,11 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         (state, ownProps) => ({
             _inputs: inputsSelector(state), // Temporary prop to pass down to merge
             [opts.formKey]: formSelector(state),
-            [opts.inputActions]: inputActions,
             ...mapStateToProps(state, ownProps)
         }),
         (dispatch, ownProps) => ({
             _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch), // Temporary
+            [opts.inputActionsKey]: bindActionCreators(inputActions, dispatch),
             ...mapDispatchToProps(dispatch, ownProps)
         }),
         ({ _inputs, ...stateProps}, { _getInputProps, ...dispatchProps }, ownProps) => ({
