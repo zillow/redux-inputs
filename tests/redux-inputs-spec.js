@@ -5,7 +5,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT, VALIDATING } from '../src/actions/actionTypes';
-import { _setInput, setInput, updateAndValidate, validateInputs, resetInputs } from '../src/actions';
+import { _setInput, setInput, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
@@ -35,8 +35,11 @@ describe('createInputsReducer', () => {
             let reducer = fn();
             let state = reducer();
             expect(state).to.deep.equal({
-                ...initialState
-            })
+                email: {
+                    value: undefined,
+                    pristine: true
+                }
+            });
         });
         it('should accept SET_INPUT for inputs defined in inputConfig', () => {
             let reducer = fn();
@@ -67,7 +70,10 @@ describe('createInputsReducer', () => {
                 }
             });
             expect(state).to.deep.equal({
-                ...initialState,
+                email: {
+                    pristine: true,
+                    value: undefined
+                },
                 name: { value: 'test' }
             });
         });
@@ -99,8 +105,8 @@ describe('createInputsReducer', () => {
                 phone: { value: 123 }
             });
             expect(state).to.deep.equal({
-                email: { value: undefined },
-                name: { value: 'test' },
+                email: { value: undefined, pristine: true },
+                name: { value: 'test', pristine: true },
                 phone: { value: 123 }
             });
         });
@@ -159,7 +165,10 @@ describe('createInputsReducer', () => {
             let reducer = fn();
             let state = reducer();
             expect(state).to.deep.equal({
-                ...initialState
+                positiveNumber: {
+                    pristine: true,
+                    value: undefined
+                }
             })
         });
         it('should accept SET_INPUT for valid input', () => {
@@ -290,7 +299,10 @@ describe('setInput thunk', () => {
                 email: { value: 'test@test.com' }
             },
             error: false,
-            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+            meta: {
+                reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT,
+                suppressChange: true
+            }
         }];
         const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
         const onChangeSpy = sinon.spy();
@@ -300,7 +312,9 @@ describe('setInput thunk', () => {
             }
         }, {
             email: { value: 'test@test.com' }
-        }, true);
+        }, {
+            suppressChange: true
+        });
 
         return store.dispatch(thunk).then((changed) => {
             expect(store.getActions()).to.deep.equal(expectedActions);
@@ -322,8 +336,8 @@ describe('resetInputs thunk', () => {
         const thunk = resetInputs({ blank: {}, defaulted: { defaultValue: 2 }});
         thunk(action => {
             expect(action.payload).to.deep.equal({
-                blank: {value: undefined},
-                defaulted: {value: 2}
+                blank: {value: undefined, pristine: true},
+                defaulted: {value: 2, pristine: true}
             });
         }, () => ({
             [DEFAULT_REDUX_MOUNT_POINT]: {}
@@ -333,7 +347,7 @@ describe('resetInputs thunk', () => {
         const thunk = resetInputs({ blank: {}, defaulted: { defaultValue: 2 }}, ['blank']);
         thunk(action => {
             expect(action.payload).to.deep.equal({
-                blank: {value: undefined}
+                blank: {value: undefined, pristine: true}
             });
         }, () => ({
             [DEFAULT_REDUX_MOUNT_POINT]: {}
@@ -760,7 +774,10 @@ describe('updateAndValidate thunk', () => {
                 }
             },
             error: true,
-            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+            meta: {
+                reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT,
+                suppressChange: true
+            }
         }];
         const store = mockStore({ inputs: { email: { value: 'storevalue' }}});
         const onChangeSpy = sinon.spy();
@@ -771,7 +788,9 @@ describe('updateAndValidate thunk', () => {
             }
         }, {
             email: 'te'
-        }, true);
+        }, {
+            suppressChange: true
+        });
 
         return store.dispatch(thunk).then(null, (changed) => {
             expect(store.getActions()).to.deep.equal(expectedActions);
@@ -794,7 +813,7 @@ describe('validateInputs thunk', () => {
                 type: 'RI_SET_INPUT',
                 payload: { email: { value: 'valid', validating: false } },
                 error: false,
-                meta: { reduxMountPoint: 'inputs' }
+                meta: { reduxMountPoint: 'inputs', validate: true }
             });
         }, () => ({ inputs: { email: { value: 'valid' } } }) /* getState */).then((results) => {
             expect(results).to.deep.equal({
@@ -814,12 +833,35 @@ describe('validateInputs thunk', () => {
                 type: 'RI_SET_INPUT',
                 payload: { email: { value: undefined, error: '', validating: false } },
                 error: true,
-                meta: { reduxMountPoint: 'inputs' }
+                meta: { reduxMountPoint: 'inputs', validate: true }
             });
         }, () => ({ inputs: { email: { value: undefined } } }) /* getState */).then(null, (erroredInputs) => {
             // Reject
             expect(erroredInputs).to.equal({
                 email: { value: undefined, error: '', validating: false }
+            });
+        });
+    });
+});
+
+describe('initializeInputs thunk', () => {
+    it('passes valid inputs', () => {
+        let thunk = initializeInputs({
+            email: {
+                validator: value => (value && value.length > 0)
+            }
+        }, { email: 'test@test.com'});
+
+        thunk((action) => {
+            expect(action).to.deep.equal({
+                type: 'RI_SET_INPUT',
+                payload: { email: { value: 'test@test.com', validating: false, pristine: true } },
+                error: false,
+                meta: { reduxMountPoint: 'inputs', initialize: true }
+            });
+        }, () => ({ inputs: { email: { value: 'valid' } } }) /* getState */).then((results) => {
+            expect(results).to.deep.equal({
+                email: { value: 'test@test.com', validating: false, pristine: true }
             });
         });
     });
@@ -841,11 +883,12 @@ describe('connectWithInputs', () => {
         const initialProps = {
             inputs: {
                 email: {
-                    value: 'test@test.com'
+                    value: 'test@test.com',
+                    pristine: true
                 }
             }
         }
-        const store = mockStore({ inputs: { email: { value: 'test@test.com' } } })
+        const store = mockStore({ inputs: { email: { value: 'test@test.com', pristine: true } } })
         const mapStateToProps = connectStub.args[0][0];
         const mapDispatchToProps = connectStub.args[0][1];
         const mergeProps = connectStub.args[0][2];
@@ -856,13 +899,14 @@ describe('connectWithInputs', () => {
 
         expect(finalProps.inputProps).to.exist;
         expect(finalProps.inputs).to.deep.equal({
-            email: { value: 'test@test.com' }
+            email: { value: 'test@test.com', pristine: true }
         });
         expect(finalProps.form).to.deep.equal({
             values: {
                 email: 'test@test.com'
             },
-            validating: false
+            validating: false,
+            pristine: true
         });
         expect(finalProps.dispatch).to.exist;
 

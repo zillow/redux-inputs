@@ -8,7 +8,10 @@ import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
 import { SET_INPUT } from '../actions/actionTypes';
 
 function getDefaultInputState(config) {
-    return { value: config.defaultValue };
+    return {
+        value: config.defaultValue,
+        pristine: true
+    };
 }
 
 export function getDefaultInputs(inputConfig) {

@@ -5,8 +5,8 @@ import _property from 'lodash/property';
 import _reduce from 'lodash/reduce';
 import _isEmpty from 'lodash/isEmpty';
 
-import { updateAndValidate } from '../actions';
-import { createFormSelector } from './selectors';
+import { bindActions, updateAndValidate } from '../actions';
+import { createInputsSelector, createFormSelector } from './selectors';
 
 export const FORM_KEY = '_form';
 export const DEFAULT_REDUX_MOUNT_POINT = 'inputs';
@@ -94,23 +94,28 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         connect: connect,
         ...options
     };
+    const inputsSelector = createInputsSelector(inputConfig);
     const formSelector = createFormSelector(inputConfig);
+    const inputActions = bindActions(inputConfig);
+
     return (
         mapStateToProps = i => i,
         mapDispatchToProps = dispatch => ({ dispatch }),
         mergeProps = (stateProps, dispatchProps, ownProps) => ({ ...stateProps, ...dispatchProps, ...ownProps }),
         connectOptions = {}
     ) => Component => opts.connect(
-        mapStateToProps,
+        (state, ownProps) => ({
+            _inputs: inputsSelector(state), // Temporary prop to pass down to merge
+            [opts.formKey]: formSelector(state),
+            [opts.inputActions]: inputActions,
+            ...mapStateToProps(state, ownProps)
+        }),
         (dispatch, ownProps) => ({
-            _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch),
+            _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch), // Temporary
             ...mapDispatchToProps(dispatch, ownProps)
         }),
-        (stateProps, { _getInputProps, ...dispatchProps }, ownProps) => ({
-            [opts.inputPropsKey]: _getInputProps(
-                _property(getReduxMountPoint(inputConfig))(stateProps) // Get inputs state from global state
-            ),
-            [opts.formKey]: formSelector(stateProps),
+        ({ _inputs, ...stateProps}, { _getInputProps, ...dispatchProps }, ownProps) => ({
+            [opts.inputPropsKey]: _getInputProps(_inputs), // Use temporary props to create inputProps
             ...mergeProps(stateProps, dispatchProps, ownProps)
         }),
         connectOptions

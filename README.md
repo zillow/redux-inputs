@@ -197,8 +197,8 @@ With this set up, you are able make changes to inputs and have them declarativel
  [BlurInput](http://khan.github.io/react-components/#blur-input).
 
 ## Action Creators/Thunks
- 
-### `updateInputs(inputConfig, change)`
+
+### `updateInputs(inputConfig, change, meta)`
 
 Thunk that validates change and dispatches `setInputs` to update inputs changed. Returns a Promise where the 
 resolve function is passed the input states of inputs that were validated and the 
@@ -207,6 +207,7 @@ reject function is passed the input states of inputs that are invalid
 #### Arguments
 - `inputConfig` *(Object)*
 - `change` *(Object)* key-value pairs of input key and new value to be validated and set if valid.
+- `meta` *(Object)* [optional] extra meta information to add to the action object(s)
 
 Example change
 
@@ -214,6 +215,10 @@ Example change
         email: 'test@test.com',
         name: 'larry'
     }
+    
+### `initialize(inputConfig, change, meta)`
+
+Same as updateInputs, but all inputs are still considered `pristine` after updating.
 
 ### `setInputs(inputConfig, newInputState)`
 
@@ -222,6 +227,7 @@ Creates an action that sets inputs state directly without validation.
 #### Arguments
 - `inputConfig` *(Object)*
 - `newInputState` *(Object)*
+- `meta` *(Object)* [optional] extra meta information to add to the action object(s)
 
 Example newInputState:
 
@@ -235,7 +241,7 @@ Example newInputState:
         }
     }
 
-### `validateInputs(inputConfig, ?inputKeys)`
+### `validateInputs(inputConfig, inputKeys, meta)`
 
 Thunk that returns a Promise which resolves if all inputs are valid, rejects if one or more inputs are invalid.
 Triggers errors on inputs.
@@ -245,10 +251,13 @@ reject function is passed the input states of inputs that are invalid
 #### Arguments
 - `inputConfig` *(Object)*
 - `inputKeys` *(Array)* [optional] Array of input keys found in inputConfig. If no inputKeys are given, validates all inputs found in inputConfig.
+- `meta` *(Object)* [optional] extra meta information to add to the action object(s)
 
-### `resetInputs(inputConfig)`
+### `resetInputs(inputConfig, meta)`
 
-Returns an action that when dispatched will reset the form values associated with the given inputConfig to their default values.
+Returns an action that when dispatched will reset the form values associated with the given inputConfig to their default values. 
+
+Note on `meta` parameter: adding `suppressChange` to the meta object for any action creator will skip any `onChange` callbacks in the inputConfig.
 
 ## Contributing
 

@@ -5,19 +5,21 @@ import { createSelector } from 'reselect';
 
 import { getInputsFromState } from './helpers';
 
-export const inputsSelector = inputConfig => state => getInputsFromState(inputConfig, state);
+export const createInputsSelector = inputConfig => state => getInputsFromState(inputConfig, state);
 
-const getValues = inputs => _reduce(inputs, (acc, input, key) => ({
+const getValuesFromInputs = inputs => _reduce(inputs, (acc, input, key) => ({
     ...acc,
     [key]: input.value
 }), {});
 
-const isValidating = inputs => _some(inputs, input => input.validating);
+const areInputsValidating = inputs => _some(inputs, input => input.validating);
+const areInputsPristine = inputs => !_some(inputs, input => !input.pristine);
 
 export const createFormSelector = inputConfig => createSelector(
-    inputsSelector(inputConfig),
+    createInputsSelector(inputConfig),
     inputs => ({
-        values: getValues(inputs),
-        validating: isValidating(inputs)
+        values: getValuesFromInputs(inputs),
+        validating: areInputsValidating(inputs),
+        pristine: areInputsPristine(inputs)
     })
 );

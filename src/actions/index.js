@@ -28,22 +28,16 @@ function _filterUnknownInputs(inputConfig, inputs) {
     }, {});
 }
 
-// Creates actions with meta information attached
-function _createActionWithMeta(inputConfig, action) {
+export function _setInput(inputConfig, update, meta = {}) {
     return {
-        ...action,
-        meta: {
-            reduxMountPoint: getReduxMountPoint(inputConfig)
-        }
-    };
-}
-
-export function _setInput(inputConfig, update) {
-    return _createActionWithMeta(inputConfig, {
         type: SET_INPUT,
         payload: update,
-        error: !!inputsHaveErrors(update)
-    });
+        error: !!inputsHaveErrors(update),
+        meta: {
+            reduxMountPoint: getReduxMountPoint(inputConfig),
+            ...meta
+        }
+    };
 }
 
 function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
@@ -67,10 +61,10 @@ function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
  *      }
  *  }
  */
-export function setInput(inputConfig, update, suppressChange) {
+export function setInput(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
-        dispatch(_setInput(inputConfig, update));
-        if (!suppressChange) {
+        dispatch(_setInput(inputConfig, update, meta));
+        if (!meta.suppressChange) {
             const state = getState();
             const inputsState = getInputsFromState(inputConfig, state);
             _fireChanges(inputConfig, update, inputsState, state, dispatch);
@@ -79,9 +73,12 @@ export function setInput(inputConfig, update, suppressChange) {
     };
 }
 
-export function resetInputs(inputConfig, inputKeys) {
+export function resetInputs(inputConfig, inputKeys, meta = {}) {
     const update = getDefaultInputs(inputConfig);
-    return setInput(inputConfig, inputKeys ? _pick(update, inputKeys) : update);
+    return setInput(inputConfig, inputKeys ? _pick(update, inputKeys) : update, {
+        reset: true,
+        ...meta
+    });
 }
 
 /**
@@ -91,7 +88,7 @@ export function resetInputs(inputConfig, inputKeys) {
  * @param inputKeys {Array}
  * @returns {Thunk}
  */
-export function validateInputs(inputConfig, inputKeys, suppressChange) {
+export function validateInputs(inputConfig, inputKeys, meta = {}) {
     return (dispatch, getState) => {
         const inputsState = getInputsFromState(inputConfig, getState());
         const keys = inputKeys || _keys(inputsState);
@@ -105,11 +102,14 @@ export function validateInputs(inputConfig, inputKeys, suppressChange) {
             }
             return result;
         }, {});
-        return updateAndValidate(inputConfig, inputsToValidate, suppressChange)(dispatch, getState);
+        return updateAndValidate(inputConfig, inputsToValidate, {
+            ...meta,
+            validate: true
+        })(dispatch, getState);
     };
 }
 
-export function updateAndValidate(inputConfig, update, suppressChange) {
+export function updateAndValidate(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
         const inputs = _filterUnknownInputs(inputConfig, update);
 
@@ -121,6 +121,12 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
         const inputsState = getInputsFromState(inputConfig, state);
         const promises = [];
 
+        const createNewState = newInputState => meta.initialize ? ({
+            pristine: true,
+            ...newInputState
+        }) : newInputState;
+
+
         const changes = _reduce(inputs, (result, value, key) => {
             const { validator } = inputConfig[key];
 
@@ -130,7 +136,7 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
                 hasAsync = typeof validationResult === 'object' && !!validationResult.then;
 
             const dispatchAndReturnPromiseResult = inputState =>
-                setInput(inputConfig, { [key]: inputState }, suppressChange)(dispatch, getState);
+                setInput(inputConfig, { [key]: createNewState(inputState) }, meta)(dispatch, getState);
 
             if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
                 const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
@@ -148,10 +154,10 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
                     change.errorText = validationResult;
                 }
 
-                result[key] = change;
+                result[key] = createNewState(change);
 
                 if (!hasAsync || unchanged) {
-                    promises.push(Promise.resolve({ [key]: change }));
+                    promises.push(Promise.resolve({ [key]: createNewState(change) }));
                 } else {
                     // Kick off async
                     promises.push(validationResult.then(
@@ -176,7 +182,7 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
             return result;
         }, {});
 
-        setInput(inputConfig, changes, suppressChange)(dispatch, getState);
+        setInput(inputConfig, changes, meta)(dispatch, getState);
 
         return new Promise((resolve, reject) => {
             Promise.all(promises).then(results => {
@@ -193,6 +199,17 @@ export function updateAndValidate(inputConfig, update, suppressChange) {
     };
 }
 
-export function initializeInputs(inputconfig, update) {
-    return updateAndValidate(inputconfig, update, true);
+export function initializeInputs(inputconfig, update, meta = {}) {
+    return updateAndValidate(inputconfig, update, {
+        initialize: true,
+        ...meta
+    });
 }
+
+export const bindActions = inputConfig => ({
+    setInput: (update, meta) => setInput(inputConfig, update, meta),
+    updateAndValidate: (update, meta) => updateAndValidate(inputConfig, update, meta),
+    validateInputs: (inputKeys, meta) => validateInputs(inputConfig, inputKeys, meta),
+    resetInputs: (inputKeys, meta) => resetInputs(inputConfig, inputKeys, meta),
+    initializeInputs: (update, meta) => initializeInputs(inputConfig, update, meta)
+});
