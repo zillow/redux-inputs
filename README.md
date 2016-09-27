@@ -150,7 +150,7 @@ This represents a form with one input where the user first typed 'test@test.com'
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import { createInputsReducer, connectWithInputs } from 'redux-inputs';
+import { createInputsReducer, connectWithInputs, ReduxInputsWrapper } from 'redux-inputs';
 import { Provider } from 'react-redux';
 import thunk = from 'redux-thunk';
 
@@ -160,7 +160,6 @@ const inputConfig = {
         validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
     }
 };
-// If you have multiple inputConfigs, they share this one reducer
 const reducer = combineReducers({
     inputs: createInputsReducer(inputConfig)
 });
@@ -168,26 +167,24 @@ const store = createStore(reducer, applyMiddleware(thunk));
 
 let EmailInput = ({id, value, error, onChange}) => (
     <div>
-        <input name={id} onChange={(e) => onChange(e.target.value)}/>
-        {error ? <div>Your email must contain an @</div> : null} 
+        <input name={id} value={value} onChange={(e) => onChange(e.target.value)}/>
+        {error ? <p style={{color: 'red'}}>Your email must contain an @</p> : null}
     </div>
 );
-EmailInput = InputsWrapper(EmailInput);
+EmailInput = ReduxInputsWrapper(EmailInput);
 
 function Form(props) {
-    const { dispatch, inputs, inputProps } = props;
+    const { inputs, inputProps } = props;
     return (
         <form>
             <EmailInput {...inputProps.email}/>
             <h3>Input state</h3>
             <pre>{JSON.stringify(inputs, null, 2)}</pre>
         </form>
-    )
+    );
 }
-const ConnectedForm = connectWithInputs({
-    inputConfig
-})(s => s)(Form);
-ReactDOM.render(<Provider store={store}><ConnectedForm /></Provider>, document.getElementById('container'));
+const FormContainer = connectWithInputs(inputConfig)(s => s)(Form);
+ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
 ```
 
 
