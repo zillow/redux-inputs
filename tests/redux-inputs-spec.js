@@ -345,7 +345,14 @@ describe('resetInputs thunk', () => {
 
 describe('updateAndValidate thunk', () => {
     it('correctly dispatches client side validation changes when valid', () => {
-        let thunk = updateAndValidate({
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: { email: { value: 'test@test.com', validating: false } },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }];
+        const store = mockStore({ inputs: { email: { value: '' } } });
+        const thunk = updateAndValidate({
             email: {
                 validator: value => (value && value.length > 0)
             }
@@ -353,20 +360,24 @@ describe('updateAndValidate thunk', () => {
             email: 'test@test.com'
         });
 
-        thunk((action) => {
-            // Capture dispatched action
-            expect(action).to.deep.equal({
-                type: 'RI_SET_INPUT',
-                payload: {
-                    email: { value: 'test@test.com', validating: false }
-                },
-                error: false,
-                meta: { reduxMountPoint: 'inputs' }
-            });
-        }, () => ({
-            // Mocked initial state
-            inputs: {}
-        }));
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
+    });
+    it('should not fire unnecessary setInputs', () => {
+        const expectedActions = [];
+        const store = mockStore({ inputs: { email: { value: 'test@test.com', validating: false } } });
+        const thunk = updateAndValidate({
+            email: {
+                validator: value => (value && value.length > 0)
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
     });
     it('should not fire unnecessary async validation', () => {
         const expectedActions = [{
@@ -499,7 +510,6 @@ describe('updateAndValidate thunk', () => {
         const thunk = updateAndValidate({
             email: {
                 validator: () => Promise.resolve()
-
             }
         }, {
             email: 'test@test.com'

@@ -132,13 +132,13 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
 
             const validationResult = validator ? validator(value, inputsState, state, dispatch) : true,
                 prev = inputsState[key] && inputsState[key].value,
-                unchanged = _isEqual(prev, value),
                 hasAsync = typeof validationResult === 'object' && !!validationResult.then;
 
             const dispatchAndReturnPromiseResult = inputState =>
                 setInputs(inputConfig, { [key]: createNewState(inputState) }, meta)(dispatch, getState);
 
             if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
+                const unchanged = _isEqual(prev, value);
                 const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
                     value: value,
                     validating: hasAsync && !unchanged // Will be validating if async validator exists
@@ -154,10 +154,15 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                     change.errorText = validationResult;
                 }
 
-                result[key] = createNewState(change);
+                const newState = createNewState(change);
+
+                // Only fire setInput on state that is different than current
+                if (!_isEqual(newState, inputsState[key])) {
+                    result[key] = newState;
+                }
 
                 if (!hasAsync || unchanged) {
-                    promises.push(Promise.resolve({ [key]: createNewState(change) }));
+                    promises.push(Promise.resolve({ [key]: newState }));
                 } else {
                     // Kick off async
                     promises.push(validationResult.then(
@@ -182,7 +187,9 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
             return result;
         }, {});
 
-        setInputs(inputConfig, changes, meta)(dispatch, getState);
+        if (!_isEmpty(changes)) {
+            setInputs(inputConfig, changes, meta)(dispatch, getState);
+        }
 
         return new Promise((resolve, reject) => {
             Promise.all(promises).then(results => {
