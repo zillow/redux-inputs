@@ -533,7 +533,6 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: 'inputs' },
             payload: { email: {
                 error: 'test@test.com',
-                errorText: undefined,
                 value: undefined
             }},
             type: 'RI_SET_INPUT'
@@ -552,7 +551,6 @@ describe('updateAndValidate thunk', () => {
             expect(changed).to.deep.equal({
                 email: {
                     error: 'test@test.com',
-                    errorText: undefined,
                     value: undefined
                 }
             });
@@ -681,7 +679,7 @@ describe('updateAndValidate thunk', () => {
         }, {
             error: true,
             meta: { reduxMountPoint: 'inputs' },
-            payload: { email: { error: 'test@test.com', errorText: undefined, value: undefined }},
+            payload: { email: { error: 'test@test.com', value: undefined }},
             type: 'RI_SET_INPUT'
         }];
         const store = mockStore({ inputs: {} });
@@ -700,7 +698,7 @@ describe('updateAndValidate thunk', () => {
         return store.dispatch(thunk).then(null, (changed) => {
             expect(store.getActions()).to.deep.equal(expectedActions);
             expect(changed).to.deep.equal({
-                email: { error: 'test@test.com', errorText: undefined, value: undefined }
+                email: { error: 'test@test.com', value: undefined }
             });
         });
     });

@@ -172,7 +172,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                         errorText => dispatchAndReturnPromiseResult({
                             value: prev,
                             error: value || '',
-                            errorText
+                            ...(typeof errorText === 'string' ? { errorText } : {})
                         })
                     ));
                 }
