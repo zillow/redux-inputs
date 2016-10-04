@@ -399,6 +399,39 @@ describe('updateAndValidate thunk', () => {
             expect(store.getActions()).to.deep.equal(expectedActions);
         });
     });
+    it('should not fire async validation more than once while validating', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: { email: { value: 'test@test.com' } },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }, {
+            type: SET_INPUT,
+            payload: { email: { value: 'test@test.com' } },
+            error: false,
+            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
+        }];
+        const store = mockStore({ inputs: { email: { value: 'test@test.com', validating: true } } });
+        const cb = sinon.stub();
+        const thunk = updateAndValidate({
+            email: {
+                validator: () => new Promise((resolve) => {
+                    setTimeout(() => {
+                        cb();
+                        resolve();
+                    }, 5);
+                })
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        store.dispatch(thunk);
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+            expect(cb.callCount).to.equal(1);
+        });
+    });
     it('correctly dispatches client side validation changes when errored', () => {
         let thunk = updateAndValidate({
             email: {

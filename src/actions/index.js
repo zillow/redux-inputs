@@ -16,6 +16,8 @@ import {
 import log from '../util/log';
 import { getDefaultInputs } from '../reducers';
 
+const _promiseCache = {};
+
 function _filterUnknownInputs(inputConfig, inputs) {
     // Only update known inputs
     return _reduce(inputs, (result, value, key) => {
@@ -128,26 +130,26 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
 
 
         const changes = _reduce(inputs, (result, value, key) => {
-            const { validator } = inputConfig[key];
 
-            const validationResult = validator ? validator(value, inputsState, state, dispatch) : true,
-                prev = inputsState[key] && inputsState[key].value,
-                hasAsync = typeof validationResult === 'object' && !!validationResult.then;
+            const { validator } = inputConfig[key];
+            const { value: prev, validating: currentlyValidating } = inputsState[key] || {};
+            const unchanged = _isEqual(prev, value);
+            const validationResult = unchanged && currentlyValidating && _promiseCache[key] ? _promiseCache[key]
+                : validator ? validator(value, inputsState, state, dispatch) : true;
+            const hasAsync = typeof validationResult === 'object' && !!validationResult.then;
 
             const dispatchAndReturnPromiseResult = inputState =>
                 setInputs(inputConfig, { [key]: createNewState(inputState) }, meta)(dispatch, getState);
 
             if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
-                const unchanged = _isEqual(prev, value);
                 const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
                     value: value,
-                    validating: hasAsync && !unchanged // Will be validating if async validator exists
+                    validating: currentlyValidating || (hasAsync && !unchanged) // Will be validating if async validator exists
                 }) : ({ // False returned, input invalid
                     value: prev,
                     error: value || '',
                     validating: false
                 });
-
 
                 // Add errorText if validator returned a string
                 if (typeof validationResult === 'string') {
@@ -161,11 +163,11 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                     result[key] = newState;
                 }
 
-                if (!hasAsync || unchanged) {
+                if (!change.validating) {
                     promises.push(Promise.resolve({ [key]: newState }));
                 } else {
                     // Kick off async
-                    promises.push(validationResult.then(
+                    promises.push(_promiseCache[key] = validationResult.then(
                         // Passed validation
                         () => dispatchAndReturnPromiseResult({ value }),
                         // Failed validation
