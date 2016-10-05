@@ -48,13 +48,15 @@ Give redux-inputs reducer to Redux in your project's reducers file.
 
     import { connectWithInputs } from 'redux-inputs';
     
-    YourForm = connectWithInputs(inputConfig)()(YourForm);
+    const connectWithMyForm = connectWithInputs(inputConfig);
     
-Connect your form with `connectWithInputs`, which takes the `inputConfig` and creates a function that has the same 
-interface as react-redux's `connect`. This will pass down these additional props to your component, in addition to any 
+    YourForm = connectWithMyForm(mapStateToProps, mapDispatchToProps, mergeProps, options)(YourForm);
+    
+Create a connect function for your form, which takes the `inputConfig` and creates a function that has the same 
+interface as [react-redux](https://github.com/reactjs/react-redux)'s `connect`. This will pass down these additional props to your component, in addition to any 
 other redux state specified:
 
-#### Props
+#### Props passed down to component
 
 - `inputProps` *{Object}* contains props for each input in the inputConfig
 
@@ -73,8 +75,16 @@ other redux state specified:
 
 ### Step 5 - Wrapper
 
-import { InputsWrapper } from 'redux-inputs';
- 
+    import { ReduxInputsWrapper } from 'redux-inputs';
+    
+    let Input = ({id, value, error, errorText, onChange}) => (
+        <div>
+            <input name={id} onChange={(e) => onChange(e.target.value)}/>
+            {error ? <div>{errorText}</div> : null} 
+        </div>
+    );
+    Input = ReduxInputsWrapper(Input);
+
 Higher order component that wraps input components and wires them up to the state. This allows all types of inputs to 
 conform to the same API, and be easily understood and swapped out.
 
@@ -98,19 +108,7 @@ conform to the same API, and be easily understood and swapped out.
 - resolve *(function)* callback after successful change - same as resolve of updateAndValidate
 - reject *(function)* callback after failed validation - same as reject of updateAndValidate
 
-
-    import { ReduxInputsWrapper } from 'redux-inputs';
-
-    let Input = ({id, value, error, errorText, onChange}) => (
-        <div>
-            <input name={id} onChange={(e) => onChange(e.target.value)}/>
-            {error ? <div>{errorText}</div> : null} 
-        </div>
-    );
-    Input = ReduxInputsWrapper(Input);
-    
-    
-The `ReduxInputsWrapper` looks at the state and turns it into `value`, and `error` props, where `value` is equal to 
+The `ReduxInputsWrapper` looks at the inputState and turns it into `value`, and `error` props, where `value` is equal to 
 `inputs.email.value` if `inputs.email.error` is undefined, or `inputs.email.error` otherwise. The `ReduxInputsWrapper` 
 passes down any other properties of the input state untouched.
 Then this input can be used in the render of connected `YourForm` like this:
@@ -197,6 +195,10 @@ With this set up, you are able make changes to inputs and have them declarativel
 
 ## Action Creators/Thunks
 
+It is recommended you use the action creators from `inputActions` in props passed down from `connectWithInputs`, since 
+they are pre-bound to the inputConfig and dispatch. The unbound versions can be imported for calling 
+actions outside of connected components. 
+
 ### `updateAndValidate(inputConfig, change, meta)`
 
 Thunk that validates change and dispatches `setInputs` to update inputs changed. Returns a Promise where the 
@@ -254,7 +256,7 @@ reject function is passed the input states of inputs that are invalid
 
 ### `resetInputs(inputConfig, inputKeys, meta)`
 
-Returns an action that when dispatched will reset the form values associated with the given inputConfig to their `defaultValue`. 
+Returns an action that when dispatched will reset the form values associated with the given inputConfig to their `defaultValue` and are considered `pristine`.
 
 #### Arguments
 - `inputConfig` *(Object)*

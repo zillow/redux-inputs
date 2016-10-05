@@ -9,13 +9,13 @@
         }
     };
 
-This inputConfig defines a single email input with a defaultValue, validator, and asyncValidator.
+This inputConfig defines a single email input with a defaultValue and validator.
 
 ## API
 
 ### `defaultValue` *(Any)* The value your input will start out with. 
 
-### `validator(value, inputsState, state, dispatch)`
+### `validator(value, inputs, state, dispatch)`
  
 Function for performing validation
  
