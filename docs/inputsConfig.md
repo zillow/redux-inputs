@@ -1,15 +1,15 @@
-# Input Config object
+# Inputs Config object
 
 ## Example
 
-    const inputConfig = {
+    const inputsConfig = {
         email: {
             defaultValue: '',
             validator: (value) => typeof value === 'string' && value.length > 0
         }
     };
 
-This inputConfig defines a single email input with a defaultValue and validator.
+This inputsConfig defines a single email input with a defaultValue and validator.
 
 ## API
 
@@ -35,7 +35,7 @@ Function for performing validation
         
 #### Example
 
-    inputConfig: {
+    inputsConfig: {
         homeValue: {
             validator: value => typeof value === 'number' && value > 0
         },
@@ -85,24 +85,3 @@ Function for firing actions after an input is validate and changed.
 4. `dispatch` *(Function)* dispatch function from the redux store, for dispatching side-effect actions
 
 ### `props` *(Object)* Props to pass down to every component associated with this input 
-
-## Form Config
-
-You may set a `_form` property at the root of `inputConfig` to change form-wide settings
-
-#### `reduxMountPoint` *(String)* change the key used to store redux-inputs state in the store. Defaults to `inputs`. If the input state is stored deeply in the state tree, this `can.be.dot.separated`.
-
-    inputConfig = {
-        _form: {
-            reduxMountPoint: 'tab1.inputs'
-        }
-        ... other inputs config ...
-    }
-    
-In this example your state would look like this:
-
-    {
-        tab1: {
-            inputs: {}
-        }
-    }

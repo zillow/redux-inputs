@@ -32,5 +32,5 @@ export {
 /**
  * Utility functions
  */
-export { getInputProps, connectWithInputs, getInputsFromState, getReduxMountPoint, FORM_KEY } from './util/helpers';
+export { getInputProps, connectWithInputs, getInputsFromState, getReduxMountPoint } from './util/helpers';
 export { default as ReduxInputsWrapper } from './util/ReduxInputsWrapper';

@@ -8,7 +8,6 @@ import _isEqual from 'lodash/isEqual';
 
 import { SET_INPUT } from './actionTypes';
 import {
-    FORM_KEY,
     getReduxMountPoint,
     getInputsFromState,
     inputsWithErrors
@@ -95,9 +94,6 @@ export function validateInputs(inputConfig, inputKeys, meta = {}) {
         const inputsState = getInputsFromState(inputConfig, getState());
         const keys = inputKeys || _keys(inputsState);
         const inputsToValidate = _reduce(keys, (result, key) => {
-            if (key === FORM_KEY) {
-                return result;
-            }
             const input = inputsState[key];
             if (inputConfig[key] && input) {
                 result[key] = typeof input.error !== 'undefined' ? input.error : input.value;
@@ -141,7 +137,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
             const dispatchAndReturnPromiseResult = inputState =>
                 setInputs(inputConfig, { [key]: createNewState(inputState) }, meta)(dispatch, getState);
 
-            if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) { // Or Promise
+            if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync || !validationResult) { // Or Promise
                 const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
                     value: value,
                     validating: currentlyValidating || (hasAsync && !unchanged) // Will be validating if async validator exists

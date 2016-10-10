@@ -3,7 +3,7 @@ import _forEach from 'lodash/forEach';
 import _omit from 'lodash/omit';
 import invariant from 'invariant';
 
-import { FORM_KEY, getReduxMountPoint } from '../util/helpers';
+import { REDUX_MOUNT_POINT, getReduxMountPoint } from '../util/helpers';
 
 import { SET_INPUT } from '../actions/actionTypes';
 
@@ -15,7 +15,7 @@ function getDefaultInputState(config) {
 }
 
 export function getDefaultInputs(inputConfig) {
-    return _mapValues(_omit(inputConfig, FORM_KEY), getDefaultInputState);
+    return _mapValues(_omit(inputConfig, REDUX_MOUNT_POINT), getDefaultInputState);
 }
 
 function _matchesReduxMountPoint(inputConfig, action) {
@@ -27,7 +27,7 @@ function _syncStateWithInputConfig(inputConfig, state) {
     let nsync = true;
 
     _forEach(inputConfig, (config, key) => {
-        if (key !== FORM_KEY && typeof state[key] === 'undefined') {
+        if (key !== REDUX_MOUNT_POINT && typeof state[key] === 'undefined') {
             otherInputs[key] = getDefaultInputState(config);
             nsync = false;
         }

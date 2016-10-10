@@ -2802,14 +2802,6 @@ ReactElement.createElement = function (type, config, children) {
   var source = null;
 
   if (config != null) {
-    if (process.env.NODE_ENV !== 'production') {
-      process.env.NODE_ENV !== 'production' ? warning(
-      /* eslint-disable no-proto */
-      config.__proto__ == null || config.__proto__ === Object.prototype,
-      /* eslint-enable no-proto */
-      'React.createElement(...): Expected props argument to be a plain object. ' + 'Properties defined in its prototype chain will be ignored.') : void 0;
-    }
-
     if (hasValidRef(config)) {
       ref = config.ref;
     }
@@ -2910,14 +2902,6 @@ ReactElement.cloneElement = function (element, config, children) {
   var owner = element._owner;
 
   if (config != null) {
-    if (process.env.NODE_ENV !== 'production') {
-      process.env.NODE_ENV !== 'production' ? warning(
-      /* eslint-disable no-proto */
-      config.__proto__ == null || config.__proto__ === Object.prototype,
-      /* eslint-enable no-proto */
-      'React.cloneElement(...): Expected props argument to be a plain object. ' + 'Properties defined in its prototype chain will be ignored.') : void 0;
-    }
-
     if (hasValidRef(config)) {
       // Silently steal the ref from the parent.
       ref = config.ref;
@@ -5807,15 +5791,15 @@ module.exports = setInnerHTML;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.connectWithInputs = exports.getInputProps = exports.DEFAULT_REDUX_MOUNT_POINT = exports.FORM_KEY = undefined;
+exports.connectWithInputs = exports.getInputProps = exports.DEFAULT_REDUX_MOUNT_POINT = exports.REDUX_MOUNT_POINT = undefined;
 
 var _defineProperty2 = __webpack_require__(106);
 
 var _defineProperty3 = _interopRequireDefault(_defineProperty2);
 
-var _extends5 = __webpack_require__(46);
+var _extends2 = __webpack_require__(46);
 
-var _extends6 = _interopRequireDefault(_extends5);
+var _extends3 = _interopRequireDefault(_extends2);
 
 var _objectWithoutProperties2 = __webpack_require__(183);
 
@@ -5861,12 +5845,11 @@ function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : { default: obj };
 }
 
-var FORM_KEY = exports.FORM_KEY = '_form';
+var REDUX_MOUNT_POINT = exports.REDUX_MOUNT_POINT = '_reduxMountPoint';
 var DEFAULT_REDUX_MOUNT_POINT = exports.DEFAULT_REDUX_MOUNT_POINT = 'inputs';
 
 function getReduxMountPoint(inputConfig) {
-    var formConfig = inputConfig[FORM_KEY];
-    return formConfig && formConfig.reduxMountPoint || DEFAULT_REDUX_MOUNT_POINT;
+    return inputConfig[REDUX_MOUNT_POINT] || DEFAULT_REDUX_MOUNT_POINT;
 }
 
 function getInputsFromState(inputConfig, state) {
@@ -5895,7 +5878,7 @@ function inputsWithErrors(inputs) {
  * @param dispatcher
  */
 var getInputProps = exports.getInputProps = function getInputProps(inputConfig, inputsState, dispatch) {
-    return (0, _mapValues3.default)((0, _omit3.default)(inputConfig, FORM_KEY), function (config, id) {
+    return (0, _mapValues3.default)((0, _omit3.default)(inputConfig, REDUX_MOUNT_POINT), function (config, id) {
         var inputState = inputsState[id];
         (0, _invariant2.default)(inputState, '[redux-inputs]: ' + id + ' not found in state. Make sure to configure your redux-input reducer.');
 
@@ -5905,7 +5888,7 @@ var getInputProps = exports.getInputProps = function getInputProps(inputConfig, 
 
         var hasError = typeof error !== 'undefined';
 
-        return (0, _extends6.default)({
+        return (0, _extends3.default)({
             _id: [getReduxMountPoint(inputConfig), id].join(':'),
             value: hasError ? error : value,
             error: hasError,
@@ -5931,15 +5914,11 @@ var getInputProps = exports.getInputProps = function getInputProps(inputConfig, 
  * @returns `connect` function
  */
 var connectWithInputs = exports.connectWithInputs = function connectWithInputs(inputConfig) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var mapReduxInputsToProps = arguments.length <= 1 || arguments[1] === undefined ? function (reduxInputs) {
+        return { reduxInputs: reduxInputs };
+    } : arguments[1];
+    var connect = arguments.length <= 2 || arguments[2] === undefined ? _reactRedux.connect : arguments[2];
 
-    var opts = (0, _extends6.default)({
-        // Defaults
-        inputPropsKey: 'inputProps',
-        inputActionsKey: 'inputActions',
-        formKey: 'form',
-        connect: _reactRedux.connect
-    }, options);
     var inputsSelector = (0, _selectors.createInputsSelector)(inputConfig);
     var formSelector = (0, _selectors.createFormSelector)(inputConfig);
     var inputActions = (0, _actions.bindActions)(inputConfig);
@@ -5952,24 +5931,34 @@ var connectWithInputs = exports.connectWithInputs = function connectWithInputs(i
             return { dispatch: dispatch };
         } : arguments[1];
         var mergeProps = arguments.length <= 2 || arguments[2] === undefined ? function (stateProps, dispatchProps, ownProps) {
-            return (0, _extends6.default)({}, stateProps, dispatchProps, ownProps);
+            return (0, _extends3.default)({}, stateProps, dispatchProps, ownProps);
         } : arguments[2];
         var connectOptions = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
         return function (Component) {
-            return opts.connect(function (state, ownProps) {
-                return (0, _extends6.default)((0, _defineProperty3.default)({
-                    _inputs: inputsSelector(state) }, opts.formKey, formSelector(state)), mapStateToProps(state, ownProps));
+            return connect(function (state, ownProps) {
+                return (0, _extends3.default)({
+                    _reduxInputsState: inputsSelector(state), // Temporary prop to pass down to merge
+                    _reduxInputsForm: formSelector(state)
+                }, mapStateToProps(state, ownProps));
             }, function (dispatch, ownProps) {
-                return (0, _extends6.default)((0, _defineProperty3.default)({
+                return (0, _extends3.default)({
                     _getInputProps: function _getInputProps(inputs) {
                         return getInputProps(inputConfig, inputs, dispatch);
-                    } }, opts.inputActionsKey, (0, _redux.bindActionCreators)(inputActions, dispatch)), mapDispatchToProps(dispatch, ownProps));
-            }, function (_ref, _ref2, ownProps) {
-                var _inputs = _ref._inputs;
-                var stateProps = (0, _objectWithoutProperties3.default)(_ref, ['_inputs']);
+                    }, // Temporary
+                    _reduxInputsActions: (0, _redux.bindActionCreators)(inputActions, dispatch)
+                }, mapDispatchToProps(dispatch, ownProps));
+            }, function (_ref, // stateProps
+            _ref2, // dispatchProps
+            ownProps) {
+                var _reduxInputsState = _ref._reduxInputsState;
+                var _reduxInputsForm = _ref._reduxInputsForm;
+                var stateProps = (0, _objectWithoutProperties3.default)(_ref, ['_reduxInputsState', '_reduxInputsForm']);
                 var _getInputProps = _ref2._getInputProps;
-                var dispatchProps = (0, _objectWithoutProperties3.default)(_ref2, ['_getInputProps']);
-                return (0, _extends6.default)((0, _defineProperty3.default)({}, opts.inputPropsKey, _getInputProps(_inputs)), mergeProps(stateProps, dispatchProps, ownProps));
+                var _reduxInputsActions = _ref2._reduxInputsActions;
+                var dispatchProps = (0, _objectWithoutProperties3.default)(_ref2, ['_getInputProps', '_reduxInputsActions']);
+                return (0, _extends3.default)({}, mapReduxInputsToProps((0, _extends3.default)({}, _reduxInputsForm, _reduxInputsActions, { // setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs
+                    inputProps: _getInputProps(_reduxInputsState) // Use temporary props to create inputProps
+                })), mergeProps(stateProps, dispatchProps, ownProps));
             }, connectOptions)(Component);
         };
     };
@@ -14767,6 +14756,8 @@ function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : { default: obj };
 }
 
+var _promiseCache = {};
+
 function _filterUnknownInputs(inputConfig, inputs) {
     // Only update known inputs
     return (0, _reduce3.default)(inputs, function (result, value, key) {
@@ -14855,9 +14846,6 @@ function _validateInputs(inputConfig, inputKeys) {
         var inputsState = (0, _helpers.getInputsFromState)(inputConfig, getState());
         var keys = inputKeys || (0, _keys3.default)(inputsState);
         var inputsToValidate = (0, _reduce3.default)(keys, function (result, key) {
-            if (key === _helpers.FORM_KEY) {
-                return result;
-            }
             var input = inputsState[key];
             if (inputConfig[key] && input) {
                 result[key] = typeof input.error !== 'undefined' ? input.error : input.value;
@@ -14894,20 +14882,24 @@ function _updateAndValidate(inputConfig, update) {
         var changes = (0, _reduce3.default)(inputs, function (result, value, key) {
             var validator = inputConfig[key].validator;
 
-            var validationResult = validator ? validator(value, inputsState, state, dispatch) : true,
-                prev = inputsState[key] && inputsState[key].value,
-                unchanged = (0, _isEqual3.default)(prev, value),
-                hasAsync = (typeof validationResult === 'undefined' ? 'undefined' : (0, _typeof3.default)(validationResult)) === 'object' && !!validationResult.then;
+            var _ref2 = inputsState[key] || {};
+
+            var prev = _ref2.value;
+            var currentlyValidating = _ref2.validating;
+
+            var unchanged = (0, _isEqual3.default)(prev, value);
+            var validationResult = unchanged && currentlyValidating && _promiseCache[key] ? _promiseCache[key] : validator ? validator(value, inputsState, state, dispatch) : true;
+            var hasAsync = (typeof validationResult === 'undefined' ? 'undefined' : (0, _typeof3.default)(validationResult)) === 'object' && !!validationResult.then;
 
             var dispatchAndReturnPromiseResult = function dispatchAndReturnPromiseResult(inputState) {
                 return _setInputs3(inputConfig, (0, _defineProperty3.default)({}, key, createNewState(inputState)), meta)(dispatch, getState);
             };
 
-            if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync) {
+            if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync || !validationResult) {
                 // Or Promise
                 var change = validationResult === true || hasAsync ? { // True or hasAsync, set value
                     value: value,
-                    validating: hasAsync && !unchanged // Will be validating if async validator exists
+                    validating: currentlyValidating || hasAsync && !unchanged // Will be validating if async validator exists
                 } : { // False returned, input invalid
                     value: prev,
                     error: value || '',
@@ -14919,24 +14911,28 @@ function _updateAndValidate(inputConfig, update) {
                     change.errorText = validationResult;
                 }
 
-                result[key] = createNewState(change);
+                var newState = createNewState(change);
 
-                if (!hasAsync || unchanged) {
-                    promises.push(_promise2.default.resolve((0, _defineProperty3.default)({}, key, createNewState(change))));
+                // Only fire setInput on state that is different than current
+                if (!(0, _isEqual3.default)(newState, inputsState[key])) {
+                    result[key] = newState;
+                }
+
+                if (!change.validating) {
+                    promises.push(_promise2.default.resolve((0, _defineProperty3.default)({}, key, newState)));
                 } else {
                     // Kick off async
-                    promises.push(validationResult.then(
+                    promises.push(_promiseCache[key] = validationResult.then(
                     // Passed validation
                     function () {
                         return dispatchAndReturnPromiseResult({ value: value });
                     },
                     // Failed validation
                     function (errorText) {
-                        return dispatchAndReturnPromiseResult({
+                        return dispatchAndReturnPromiseResult((0, _extends3.default)({
                             value: prev,
-                            error: value || '',
-                            errorText: errorText
-                        });
+                            error: value || ''
+                        }, typeof errorText === 'string' ? { errorText: errorText } : {}));
                     }));
                 }
             } else {
@@ -14946,7 +14942,9 @@ function _updateAndValidate(inputConfig, update) {
             return result;
         }, {});
 
-        _setInputs3(inputConfig, changes, meta)(dispatch, getState);
+        if (!(0, _isEmpty3.default)(changes)) {
+            _setInputs3(inputConfig, changes, meta)(dispatch, getState);
+        }
 
         return new _promise2.default(function (resolve, reject) {
             _promise2.default.all(promises).then(function (results) {
@@ -15043,7 +15041,7 @@ function getDefaultInputState(config) {
 }
 
 function getDefaultInputs(inputConfig) {
-    return (0, _mapValues3.default)((0, _omit3.default)(inputConfig, _helpers.FORM_KEY), getDefaultInputState);
+    return (0, _mapValues3.default)((0, _omit3.default)(inputConfig, _helpers.REDUX_MOUNT_POINT), getDefaultInputState);
 }
 
 function _matchesReduxMountPoint(inputConfig, action) {
@@ -15055,7 +15053,7 @@ function _syncStateWithInputConfig(inputConfig, state) {
     var nsync = true;
 
     (0, _forEach3.default)(inputConfig, function (config, key) {
-        if (key !== _helpers.FORM_KEY && typeof state[key] === 'undefined') {
+        if (key !== _helpers.REDUX_MOUNT_POINT && typeof state[key] === 'undefined') {
             otherInputs[key] = getDefaultInputState(config);
             nsync = false;
         }
@@ -17505,12 +17503,6 @@ Object.defineProperty(exports, 'getReduxMountPoint', {
   enumerable: true,
   get: function get() {
     return _helpers.getReduxMountPoint;
-  }
-});
-Object.defineProperty(exports, 'FORM_KEY', {
-  enumerable: true,
-  get: function get() {
-    return _helpers.FORM_KEY;
   }
 });
 
@@ -29328,10 +29320,10 @@ function _interopRequireDefault(obj) {
 var createOnChangeWithTransform = exports.createOnChangeWithTransform = function createOnChangeWithTransform(dispatchChange) {
   var onChangeTransform = arguments.length <= 1 || arguments[1] === undefined ? _identity3.default : arguments[1];
   var parser = arguments.length <= 2 || arguments[2] === undefined ? _identity3.default : arguments[2];
-  var resolve = arguments.length <= 3 || arguments[3] === undefined ? _identity3.default : arguments[3];
-  var reject = arguments.length <= 4 || arguments[4] === undefined ? _identity3.default : arguments[4];
+  var onValidationSuccess = arguments.length <= 3 || arguments[3] === undefined ? _identity3.default : arguments[3];
+  var onValidationFail = arguments.length <= 4 || arguments[4] === undefined ? _identity3.default : arguments[4];
   return function (e) {
-    return dispatchChange(parser(onChangeTransform(e))).then(resolve).catch(reject);
+    return dispatchChange(parser(onChangeTransform(e))).then(onValidationSuccess, onValidationFail);
   };
 };
 
@@ -29359,15 +29351,15 @@ var ReduxInputsWrapper = function ReduxInputsWrapper(WrappedComponent) {
     var parser = _ref.parser;
     var formatter = _ref.formatter;
     var dispatchChange = _ref.dispatchChange;
-    var resolve = _ref.resolve;
-    var reject = _ref.reject;
-    var otherProps = (0, _objectWithoutProperties3.default)(_ref, ['id', '_id', 'value', 'parser', 'formatter', 'dispatchChange', 'resolve', 'reject']);
+    var onValidationSuccess = _ref.onValidationSuccess;
+    var onValidationFail = _ref.onValidationFail;
+    var otherProps = (0, _objectWithoutProperties3.default)(_ref, ['id', '_id', 'value', 'parser', 'formatter', 'dispatchChange', 'onValidationSuccess', 'onValidationFail']);
     var onChangeTransform = options.onChangeTransform;
 
     return _react2.default.createElement(WrappedComponent, (0, _extends3.default)({ id: id || _id,
       value: formatter ? formatter(value) : value
       // onChange function to take an event facade, dispatch a change event
-      , onChange: createOnChangeWithTransform(dispatchChange, onChangeTransform, parser, resolve, reject)
+      , onChange: createOnChangeWithTransform(dispatchChange, onChangeTransform, parser, onValidationSuccess, onValidationFail)
     }, otherProps));
   };
   Wrapper.displayName = 'ReduxInputsWrapper(' + (0, _reactDisplayName2.default)(WrappedComponent) + ')';
@@ -29399,11 +29391,11 @@ var ReduxInputsWrapper = function ReduxInputsWrapper(WrappedComponent) {
     /**
      * Callback after successful validation and update
      */
-    resolve: _react2.default.PropTypes.func,
+    onValidationSuccess: _react2.default.PropTypes.func,
     /**
      * Callback after failed validation
      */
-    reject: _react2.default.PropTypes.func
+    onValidationFail: _react2.default.PropTypes.func
   };
   return Wrapper;
 };
@@ -29487,13 +29479,17 @@ var areInputsPristine = function areInputsPristine(inputs) {
         return !input.pristine;
     });
 };
+var areInputsValid = function areInputsValid(inputs) {
+    return !(0, _helpers.inputsWithErrors)(inputs);
+};
 
 var createFormSelector = exports.createFormSelector = function createFormSelector(inputConfig) {
     return (0, _reselect.createSelector)(createInputsSelector(inputConfig), function (inputs) {
         return {
             values: getValuesFromInputs(inputs),
             validating: areInputsValidating(inputs),
-            pristine: areInputsPristine(inputs)
+            pristine: areInputsPristine(inputs),
+            valid: areInputsValid(inputs)
         };
     });
 };
@@ -37005,7 +37001,7 @@ module.exports = ReactPureComponent;
 
 'use strict';
 
-module.exports = '15.3.1';
+module.exports = '15.3.2';
 
 /***/ },
 /* 514 */
@@ -37347,16 +37343,29 @@ var _reactDom2 = _interopRequireDefault(_reactDom);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var inputConfig = {
+var inputsConfig = {
     email: {
         defaultValue: 'test@example.com',
         validator: function validator(value) {
             return typeof value === 'string' && value.indexOf('@') >= 0;
         }
+    },
+    screenName: {
+        validator: function validator(value) {
+            return new Promise(function (resolve, reject) {
+                setTimeout(function () {
+                    if (value !== 'kazooie') {
+                        resolve();
+                    } else {
+                        reject();
+                    }
+                }, 1000);
+            });
+        }
     }
 };
 var reducer = (0, _redux.combineReducers)({
-    inputs: (0, _.createInputsReducer)(inputConfig)
+    inputs: (0, _.createInputsReducer)(inputsConfig)
 });
 var store = (0, _redux.createStore)(reducer, (0, _redux.applyMiddleware)(_reduxThunk2.default));
 
@@ -37382,12 +37391,55 @@ EmailInput = (0, _.ReduxInputsWrapper)(EmailInput);
 
 function Form(props) {
     var inputs = props.inputs;
-    var inputProps = props.inputProps;
+    var reduxInputs = props.reduxInputs;
+    var inputProps = reduxInputs.inputProps;
+    var values = reduxInputs.values;
+    var valid = reduxInputs.valid;
+    var pristine = reduxInputs.pristine;
+    var validating = reduxInputs.validating;
 
     return _react2.default.createElement(
         'form',
         null,
         _react2.default.createElement(EmailInput, inputProps.email),
+        _react2.default.createElement(EmailInput, inputProps.screenName),
+        _react2.default.createElement(
+            'h3',
+            null,
+            'reduxInputs prop'
+        ),
+        _react2.default.createElement(
+            'ul',
+            null,
+            _react2.default.createElement(
+                'li',
+                null,
+                'values: ',
+                _react2.default.createElement(
+                    'pre',
+                    null,
+                    JSON.stringify(values, null, 2)
+                )
+            ),
+            _react2.default.createElement(
+                'li',
+                null,
+                'valid: ',
+                valid.toString()
+            ),
+            _react2.default.createElement(
+                'li',
+                null,
+                'pristine: ',
+                pristine.toString()
+            ),
+            _react2.default.createElement(
+                'li',
+                null,
+                'validating: ',
+                validating.toString()
+            )
+        ),
         _react2.default.createElement(
             'h3',
             null,
@@ -37400,7 +37452,7 @@ function Form(props) {
         )
     );
 }
-var FormContainer = (0, _.connectWithInputs)(inputConfig)(function (s) {
+var FormContainer = (0, _.connectWithInputs)(inputsConfig)(function (s) {
     return s;
 })(Form);
 _reactDom2.default.render(_react2.default.createElement(

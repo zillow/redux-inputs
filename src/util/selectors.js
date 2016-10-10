@@ -3,7 +3,7 @@ import _some from 'lodash/some';
 
 import { createSelector } from 'reselect';
 
-import { getInputsFromState } from './helpers';
+import { getInputsFromState, inputsWithErrors } from './helpers';
 
 export const createInputsSelector = inputConfig => state => getInputsFromState(inputConfig, state);
 
@@ -14,12 +14,14 @@ const getValuesFromInputs = inputs => _reduce(inputs, (acc, input, key) => ({
 
 const areInputsValidating = inputs => _some(inputs, input => input.validating);
 const areInputsPristine = inputs => !_some(inputs, input => !input.pristine);
+const areInputsValid = inputs => !inputsWithErrors(inputs);
 
 export const createFormSelector = inputConfig => createSelector(
     createInputsSelector(inputConfig),
     inputs => ({
         values: getValuesFromInputs(inputs),
         validating: areInputsValidating(inputs),
-        pristine: areInputsPristine(inputs)
+        pristine: areInputsPristine(inputs),
+        valid: areInputsValid(inputs)
     })
 );

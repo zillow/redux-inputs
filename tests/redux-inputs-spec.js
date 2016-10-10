@@ -7,6 +7,7 @@ import { createInputsReducer } from '../src';
 import { SET_INPUT } from '../src/actions/actionTypes';
 import { _setInputs, setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
+import { createFormSelector } from '../src/util/selectors';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
 const mockStore = configureMockStore([reduxThunk]);
@@ -106,9 +107,7 @@ describe('createInputsReducer', () => {
         });
         it('should only listen to actions with correct reduxMountPoint', () => {
             let reducer = createInputsReducer({
-                _form: {
-                    reduxMountPoint: 'alternate'
-                }
+                _reduxMountPoint: 'alternate'
             });
 
             let state = reducer();
@@ -206,9 +205,7 @@ describe('_setInputs action creator', () => {
     it('should set reduxMountPoint meta information based on inputConfig settings', () => {
         let action = _setInputs({
             // Input Config
-            _form: {
-                reduxMountPoint: 'alternate'
-            }
+            _reduxMountPoint: 'alternate'
         }, {
             email: { value: 'test@test.com' }
         });
@@ -498,9 +495,7 @@ describe('updateAndValidate thunk', () => {
     });
     it('works with deep reduxMountPoint', () => {
         let thunk = updateAndValidate({
-            _form: {
-                reduxMountPoint: 'page.inputs'
-            },
+            _reduxMountPoint: 'page.inputs',
             email: {
                 validator: value => !!(value && value.length > 0)
             }
@@ -890,11 +885,13 @@ describe('connectWithInputs', () => {
 
         connectStub.returns(connectOutput);
 
-        connectWithInputs({
-            email: {}
-        }, {
-            connect: connectStub
-        })(i => i)(() => <div/>);
+        connectWithInputs(
+            {
+                email: {}
+            },
+            reduxInputs => ({ reduxInputs }),
+            connectStub
+        )(i => i)(() => <div/>);
 
         expect(connectStub.calledOnce).to.be.true;
         const initialProps = {
@@ -914,26 +911,24 @@ describe('connectWithInputs', () => {
         const dispatchProps = mapDispatchToProps(store.dispatch, initialProps);
         const finalProps = mergeProps(stateProps, dispatchProps, initialProps);
 
-        expect(finalProps.inputProps).to.exist;
-        expect(finalProps.inputActions).to.exist;
-        expect(typeof finalProps.inputActions.setInputs === 'function').to.be.true;
-        expect(typeof finalProps.inputActions.validateInputs === 'function').to.be.true;
-        expect(typeof finalProps.inputActions.updateAndValidate === 'function').to.be.true;
-        expect(typeof finalProps.inputActions.resetInputs === 'function').to.be.true;
-        expect(typeof finalProps.inputActions.initializeInputs === 'function').to.be.true;
+        expect(finalProps.reduxInputs).to.exist;
+        expect(typeof finalProps.reduxInputs.setInputs === 'function').to.be.true;
+        expect(typeof finalProps.reduxInputs.validateInputs === 'function').to.be.true;
+        expect(typeof finalProps.reduxInputs.updateAndValidate === 'function').to.be.true;
+        expect(typeof finalProps.reduxInputs.resetInputs === 'function').to.be.true;
+        expect(typeof finalProps.reduxInputs.initializeInputs === 'function').to.be.true;
+        expect(finalProps.reduxInputs.values).to.deep.equal({
+            email: 'test@test.com'
+        });
+        expect(finalProps.reduxInputs.validating).to.be.false;
+        expect(finalProps.reduxInputs.pristine).to.be.true;
+        expect(finalProps.reduxInputs.valid).to.be.true;
+        expect(finalProps.dispatch).to.exist;
         expect(finalProps.inputs).to.deep.equal({
             email: { value: 'test@test.com', pristine: true }
         });
-        expect(finalProps.form).to.deep.equal({
-            values: {
-                email: 'test@test.com'
-            },
-            validating: false,
-            pristine: true
-        });
-        expect(finalProps.dispatch).to.exist;
 
-        return finalProps.inputProps.email.dispatchChange('new@test.com').then((inputs) => {
+        return finalProps.reduxInputs.inputProps.email.dispatchChange('new@test.com').then((inputs) => {
             expect(inputs).to.deep.equal({
                 email: {
                     value: 'new@test.com',
@@ -959,11 +954,13 @@ describe('connectWithInputs', () => {
 
         connectStub.returns(connectOutput);
 
-        connectWithInputs({
-            email: {}
-        }, {
-            connect: connectStub
-        })(i => i)(() => <div/>);
+        connectWithInputs(
+            {
+                email: {}
+            },
+            reduxInputs => ({ reduxInputs }),
+            connectStub
+        )(i => i)(() => <div/>);
 
         expect(connectStub.calledOnce).to.be.true;
         const initialProps = {
@@ -983,7 +980,7 @@ describe('connectWithInputs', () => {
         const dispatchProps = mapDispatchToProps(store.dispatch, initialProps);
         const finalProps = mergeProps(stateProps, dispatchProps, initialProps);
 
-        return finalProps.inputActions.updateAndValidate({ email: 'new@test.com' }).then((inputs) => {
+        return finalProps.reduxInputs.updateAndValidate({ email: 'new@test.com' }).then((inputs) => {
             expect(inputs).to.deep.equal({
                 email: {
                     value: 'new@test.com',
@@ -1014,7 +1011,7 @@ describe('getInputProps', () => {
     const multiInputState = { email: { value: 1 }, name: { value: 4 } };
     const errorInputState = { email: { value: 1, error: 2 } };
     const errorTextState = { email: { value: 1, errorText: 'GANKSHARK' } };
-    const altMountInputConfig = { _form: { reduxMountPoint: 'alt' }, email: {}};
+    const altMountInputConfig = { _reduxMountPoint: 'alt', email: {}};
     it('returns objects with _id set', () => {
         const actual = getInputProps(basicInputConfig, basicInputState, noop);
         expect(actual.email._id).to.equal('inputs:email');
@@ -1142,6 +1139,94 @@ describe('ReduxInputsWrapper', () => {
                 formatter: () => 'formatted'
             });
             expect(rendered.props.id).to.equal('overwrite');
+        });
+    });
+});
+
+describe('Selectors', () => {
+    const testState1 = {
+        inputs: {
+            email: {
+                value: 'test@test.com',
+                pristine: true
+            },
+            name: {
+                value: 'bobby',
+                pristine: true
+            }
+        }
+    };
+    const testState2 = {
+        inputs: {
+            email: {
+                value: 'test@test.com',
+                validating: true
+            },
+            name: {
+                error: 'bo'
+            }
+        }
+    };
+    describe('values selector', () => {
+        it('works with defined values', () => {
+            const { values } = createFormSelector({})(testState1);
+            expect(values).to.deep.equal({
+                email: 'test@test.com',
+                name: 'bobby'
+            });
+        });
+        it('works with undefined values', () => {
+            const { values } = createFormSelector({})(testState2);
+            expect(values).to.deep.equal({
+                email: 'test@test.com',
+                name: undefined
+            });
+        });
+        it('works with no values', () => {
+            const { values } = createFormSelector({})({inputs: {}});
+            expect(values).to.deep.equal({});
+        });
+    });
+    describe('validating selector', () => {
+        it('works with no validating inputs', () => {
+            const { validating } = createFormSelector({})(testState1);
+            expect(validating).to.be.false;
+        });
+        it('works with one validating input', () => {
+            const { validating } = createFormSelector({})(testState2);
+            expect(validating).to.be.true;
+        });
+        it('works with no inputs', () => {
+            const { validating } = createFormSelector({})({inputs: {}});
+            expect(validating).to.be.false;
+        });
+    });
+    describe('valid selector', () => {
+        it('works with no invalid inputs', () => {
+            const { valid } = createFormSelector({})(testState1);
+            expect(valid).to.be.true;
+        });
+        it('works with one invalid input', () => {
+            const { valid } = createFormSelector({})(testState2);
+            expect(valid).to.be.false;
+        });
+        it('works with no inputs', () => {
+            const { valid } = createFormSelector({})({inputs: {}});
+            expect(valid).to.be.true;
+        });
+    });
+    describe('pristine selector', () => {
+        it('works with pristine inputs', () => {
+            const { pristine } = createFormSelector({})(testState1);
+            expect(pristine).to.be.true;
+        });
+        it('works with dirty inputs', () => {
+            const { pristine } = createFormSelector({})(testState2);
+            expect(pristine).to.be.false;
+        });
+        it('works with no inputs', () => {
+            const { pristine } = createFormSelector({})({inputs: {}});
+            expect(pristine).to.be.true;
         });
     });
 });

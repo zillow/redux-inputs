@@ -1,5 +1,5 @@
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
+import { connect as _connect } from 'react-redux';
 import invariant from 'invariant';
 import _mapValues from 'lodash/mapValues';
 import _property from 'lodash/property';
@@ -10,12 +10,11 @@ import _omit from 'lodash/omit';
 import { bindActions, updateAndValidate } from '../actions';
 import { createInputsSelector, createFormSelector } from './selectors';
 
-export const FORM_KEY = '_form';
+export const REDUX_MOUNT_POINT = '_reduxMountPoint';
 export const DEFAULT_REDUX_MOUNT_POINT = 'inputs';
 
 export function getReduxMountPoint(inputConfig) {
-    const formConfig = inputConfig[FORM_KEY];
-    return (formConfig && formConfig.reduxMountPoint) || DEFAULT_REDUX_MOUNT_POINT;
+    return inputConfig[REDUX_MOUNT_POINT] || DEFAULT_REDUX_MOUNT_POINT;
 }
 
 export function getInputsFromState(inputConfig, state) {
@@ -44,7 +43,7 @@ export function inputsWithErrors(inputs) {
  * @param dispatcher
  */
 export const getInputProps = (inputConfig, inputsState, dispatch) => (
-    _mapValues(_omit(inputConfig, FORM_KEY), (config, id) => {
+    _mapValues(_omit(inputConfig, REDUX_MOUNT_POINT), (config, id) => {
         const inputState = inputsState[id];
         invariant(inputState, `[redux-inputs]: ${id} not found in state. Make sure to configure your redux-input reducer.`);
 
@@ -81,15 +80,11 @@ export const getInputProps = (inputConfig, inputsState, dispatch) => (
  *      options.inputActionsKey {String}
  * @returns `connect` function
  */
-export const connectWithInputs = (inputConfig, options = {}) => {
-    const opts = {
-        // Defaults
-        inputPropsKey: 'inputProps',
-        inputActionsKey: 'inputActions',
-        formKey: 'form',
-        connect: connect,
-        ...options
-    };
+export const connectWithInputs = (
+    inputConfig,
+    mapReduxInputsToProps = reduxInputs => ({ reduxInputs }),
+    connect = _connect
+) => {
     const inputsSelector = createInputsSelector(inputConfig);
     const formSelector = createFormSelector(inputConfig);
     const inputActions = bindActions(inputConfig);
@@ -99,19 +94,27 @@ export const connectWithInputs = (inputConfig, options = {}) => {
         mapDispatchToProps = dispatch => ({ dispatch }),
         mergeProps = (stateProps, dispatchProps, ownProps) => ({ ...stateProps, ...dispatchProps, ...ownProps }),
         connectOptions = {}
-    ) => Component => opts.connect(
+    ) => Component => connect(
         (state, ownProps) => ({
-            _inputs: inputsSelector(state), // Temporary prop to pass down to merge
-            [opts.formKey]: formSelector(state),
+            _reduxInputsState: inputsSelector(state), // Temporary prop to pass down to merge
+            _reduxInputsForm: formSelector(state),
             ...mapStateToProps(state, ownProps)
         }),
         (dispatch, ownProps) => ({
             _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch), // Temporary
-            [opts.inputActionsKey]: bindActionCreators(inputActions, dispatch),
+            _reduxInputsActions: bindActionCreators(inputActions, dispatch),
             ...mapDispatchToProps(dispatch, ownProps)
         }),
-        ({ _inputs, ...stateProps}, { _getInputProps, ...dispatchProps }, ownProps) => ({
-            [opts.inputPropsKey]: _getInputProps(_inputs), // Use temporary props to create inputProps
+        (
+            { _reduxInputsState, _reduxInputsForm, ...stateProps}, // stateProps
+            { _getInputProps, _reduxInputsActions, ...dispatchProps }, // dispatchProps
+            ownProps
+        ) => ({
+            ...mapReduxInputsToProps({
+                ..._reduxInputsForm, // values, validating, pristine
+                ..._reduxInputsActions, // setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs
+                inputProps: _getInputProps(_reduxInputsState) // Use temporary props to create inputProps
+            }),
             ...mergeProps(stateProps, dispatchProps, ownProps)
         }),
         connectOptions
