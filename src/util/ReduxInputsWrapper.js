@@ -21,6 +21,7 @@ export const createOnChangeWithTransform = (
  * When used with getInputProps, the following may be passed down
  * - error - When present, the input is in an error state.
  *           This value should be shown instead of the 'value' prop.
+ *           TODO FIX COMMENT
  */
 const ReduxInputsWrapper = (WrappedComponent, options = {
     onChangeTransform: _identity

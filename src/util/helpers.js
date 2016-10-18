@@ -103,7 +103,7 @@ export const connectWithInputs = (
         (dispatch, ownProps) => ({
             _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch), // Temporary
             _reduxInputsActions: bindActionCreators(inputActions, dispatch),
-            ...mapDispatchToProps(dispatch, ownProps)
+            ...mapDispatchToProps(dispatch, ownProps) // TODO support object shorthand
         }),
         (
             { _reduxInputsState, _reduxInputsForm, ...stateProps}, // stateProps

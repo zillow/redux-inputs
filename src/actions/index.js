@@ -62,6 +62,7 @@ function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
  *      }
  *  }
  */
+// TODO better error when using this API wrong
 export function setInputs(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
         dispatch(_setInputs(inputConfig, update, meta));
@@ -154,7 +155,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
 
                 const newState = createNewState(change);
 
-                // Only fire setInput on state that is different than current
+                // Only fire setInputs on state that is different than current
                 if (!_isEqual(newState, inputsState[key])) {
                     result[key] = newState;
                 }

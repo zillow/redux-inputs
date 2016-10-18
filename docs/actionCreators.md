@@ -22,9 +22,9 @@ Example change
         name: 'larry'
     }
     
-### `initialize(inputsConfig, change, meta)`
+### `initializeInputs(  winputsConfig, change, meta)`
 
-Same as updateInputs, but all inputs are still considered `pristine` after updating.
+Same as updateAndValidate, but all inputs are still considered `pristine` after updating.
 
 ### `setInputs(inputsConfig, newInput, meta)`
 
