@@ -14,7 +14,10 @@
   "scripts": {
     "prepublish": "gulp && npm run build-umd",
     "build-umd": "webpack -p lib/index.js lib/redux-inputs.playground.js",
-    "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests"
+    "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests",
+    "build-examples": "webpack --config examples/basic/webpack.config.js",
+    "watch-examples": "webpack --watch --config examples/basic/webpack.config.js",
+    "serve-examples": "browser-sync start --server --port 3001 --files examples/basic/out.js --startPath /examples/basic/"
   },
   "keywords": [
     "react",

@@ -1,5 +1,6 @@
+const path = require('path');
 module.exports = {
-    entry: './index.jsx',
+    entry: path.join(__dirname, './index.jsx'),
     module: {
         loaders: [{
             test: /\.jsx?$/,
@@ -9,6 +10,11 @@ module.exports = {
         }]
     },
     output: {
-        filename: 'out.js'
+        filename: path.join(__dirname, 'out.js')
+    },
+    resolve: {
+        alias: {
+            'redux-inputs': path.join(__dirname, '..', '..', 'lib')
+        }
     }
 }
