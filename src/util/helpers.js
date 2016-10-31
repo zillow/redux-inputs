@@ -8,7 +8,7 @@ import _isEmpty from 'lodash/isEmpty';
 import _omit from 'lodash/omit';
 
 import { bindActions, updateAndValidate } from '../actions';
-import { createInputsSelector, createFormSelector } from './selectors';
+import { inputsSelector, formSelector } from './selectors';
 
 export const REDUX_MOUNT_POINT = '_reduxMountPoint';
 export const DEFAULT_REDUX_MOUNT_POINT = 'inputs';
@@ -17,8 +17,9 @@ export function getReduxMountPoint(inputConfig) {
     return inputConfig[REDUX_MOUNT_POINT] || DEFAULT_REDUX_MOUNT_POINT;
 }
 
-export function getInputsFromState(inputConfig, state) {
-    const mountPoint = getReduxMountPoint(inputConfig);
+export function getInputsFromState(inputConfigOrMountPoint = DEFAULT_REDUX_MOUNT_POINT, state) {
+    const mountPoint = typeof inputConfigOrMountPoint === 'string' ? inputConfigOrMountPoint
+        : getReduxMountPoint(inputConfigOrMountPoint);
 
     const inputsState = _property(mountPoint)(state);
     invariant(inputsState, `[redux-inputs]: no state found at '${mountPoint}', check your reducers to make sure it exists or change reduxMountPoint in your inputConfig.`);
@@ -85,8 +86,6 @@ export const connectWithInputs = (
     mapReduxInputsToProps = reduxInputs => ({ reduxInputs }),
     connect = _connect
 ) => {
-    const inputsSelector = createInputsSelector(inputConfig);
-    const formSelector = createFormSelector(inputConfig);
     const inputActions = bindActions(inputConfig);
 
     return (
@@ -96,8 +95,8 @@ export const connectWithInputs = (
         connectOptions = {}
     ) => Component => connect(
         (state, ownProps) => ({
-            _reduxInputsState: inputsSelector(state), // Temporary prop to pass down to merge
-            _reduxInputsForm: formSelector(state),
+            _reduxInputsState: inputsSelector(inputConfig)(state), // Temporary prop to pass down to merge
+            _reduxInputsForm: formSelector(inputConfig)(state),
             ...mapStateToProps(state, ownProps)
         }),
         (dispatch, ownProps) => ({

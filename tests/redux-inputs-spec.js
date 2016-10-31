@@ -7,7 +7,7 @@ import { createInputsReducer } from '../src';
 import { SET_INPUT } from '../src/actions/actionTypes';
 import { _setInputs, setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
-import { createFormSelector } from '../src/util/selectors';
+import { formSelector } from '../src/util/selectors';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 
 const mockStore = configureMockStore([reduxThunk]);
@@ -398,11 +398,6 @@ describe('updateAndValidate thunk', () => {
     });
     it('should not fire async validation more than once while validating', () => {
         const expectedActions = [{
-            type: SET_INPUT,
-            payload: { email: { value: 'test@test.com' } },
-            error: false,
-            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
-        }, {
             type: SET_INPUT,
             payload: { email: { value: 'test@test.com' } },
             error: false,
@@ -1169,63 +1164,63 @@ describe('Selectors', () => {
     };
     describe('values selector', () => {
         it('works with defined values', () => {
-            const { values } = createFormSelector({})(testState1);
+            const { values } = formSelector({})(testState1);
             expect(values).to.deep.equal({
                 email: 'test@test.com',
                 name: 'bobby'
             });
         });
         it('works with undefined values', () => {
-            const { values } = createFormSelector({})(testState2);
+            const { values } = formSelector({})(testState2);
             expect(values).to.deep.equal({
                 email: 'test@test.com',
                 name: undefined
             });
         });
         it('works with no values', () => {
-            const { values } = createFormSelector({})({inputs: {}});
+            const { values } = formSelector({})({inputs: {}});
             expect(values).to.deep.equal({});
         });
     });
     describe('validating selector', () => {
         it('works with no validating inputs', () => {
-            const { validating } = createFormSelector({})(testState1);
+            const { validating } = formSelector({})(testState1);
             expect(validating).to.be.false;
         });
         it('works with one validating input', () => {
-            const { validating } = createFormSelector({})(testState2);
+            const { validating } = formSelector({})(testState2);
             expect(validating).to.be.true;
         });
         it('works with no inputs', () => {
-            const { validating } = createFormSelector({})({inputs: {}});
+            const { validating } = formSelector({})({inputs: {}});
             expect(validating).to.be.false;
         });
     });
     describe('valid selector', () => {
         it('works with no invalid inputs', () => {
-            const { valid } = createFormSelector({})(testState1);
+            const { valid } = formSelector({})(testState1);
             expect(valid).to.be.true;
         });
         it('works with one invalid input', () => {
-            const { valid } = createFormSelector({})(testState2);
+            const { valid } = formSelector({})(testState2);
             expect(valid).to.be.false;
         });
         it('works with no inputs', () => {
-            const { valid } = createFormSelector({})({inputs: {}});
+            const { valid } = formSelector({})({inputs: {}});
             expect(valid).to.be.true;
         });
     });
     describe('pristine selector', () => {
         it('works with pristine inputs', () => {
-            const { pristine } = createFormSelector({})(testState1);
+            const { pristine } = formSelector({})(testState1);
             expect(pristine).to.be.true;
         });
         it('works with dirty inputs', () => {
-            const { pristine } = createFormSelector({})(testState2);
+            const { pristine } = formSelector({})(testState2);
             expect(pristine).to.be.false;
         });
         it('works with no inputs', () => {
-            const { pristine } = createFormSelector({})({inputs: {}});
+            const { pristine } = formSelector({})({inputs: {}});
             expect(pristine).to.be.true;
         });
     });
