@@ -14,14 +14,11 @@ export const createOnChangeWithTransform = (
  * Higher order component that wraps a given input to be compatible with redux-inputs
  *
  * The wrapped component will be given the following props:
- * - id - An identifier
- * - value - The component's last known valid value
- * - onChange - A function to be called when changes occur
- *
- * When used with getInputProps, the following may be passed down
- * - error - When present, the input is in an error state.
- *           This value should be shown instead of the 'value' prop.
- *           TODO FIX COMMENT
+ * - _id - An identifier unique to the input consisting of mount point and input id
+ * - value - The current displayed value
+ * - error - True if current value is invalid
+ * - dispatchChange - callback for updating the value
+ * - errorText - String to display to the user of current error
  */
 const ReduxInputsWrapper = (WrappedComponent, options = {
     onChangeTransform: _identity

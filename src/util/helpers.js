@@ -70,6 +70,14 @@ export const getInputProps = (inputConfig, inputsState, dispatch) => (
     })
 );
 
+function applyMapDispatchToProps(mapDispatchToProps, dispatch, ownProps) {
+    if (typeof mapDispatchToProps === 'function') {
+        return mapDispatchToProps(dispatch, ownProps);
+    } else {
+        return bindActionCreators(mapDispatchToProps, dispatch);
+    }
+}
+
 /**
  * Creates a function that works like react-redux `connect`, but adds a prop: *`inputProps`*
  * which contains the props for each input specified in the inputConfig.
@@ -102,7 +110,7 @@ export const connectWithInputs = (
         (dispatch, ownProps) => ({
             _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch), // Temporary
             _reduxInputsActions: bindActionCreators(inputActions, dispatch),
-            ...mapDispatchToProps(dispatch, ownProps) // TODO support object shorthand
+            ...applyMapDispatchToProps(mapDispatchToProps, dispatch, ownProps)
         }),
         (
             { _reduxInputsState, _reduxInputsForm, ...stateProps}, // stateProps

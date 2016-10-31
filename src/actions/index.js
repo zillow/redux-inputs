@@ -62,16 +62,16 @@ function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
  *      }
  *  }
  */
-// TODO better error when using this API wrong
 export function setInputs(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
-        dispatch(_setInputs(inputConfig, update, meta));
+        const filteredUpdate = _filterUnknownInputs(inputConfig, update)
+        dispatch(_setInputs(inputConfig, filteredUpdate, meta));
         if (!meta.suppressChange) {
             const state = getState();
             const inputsState = getInputsFromState(inputConfig, state);
-            _fireChanges(inputConfig, update, inputsState, state, dispatch);
+            _fireChanges(inputConfig, filteredUpdate, inputsState, state, dispatch);
         }
-        return Promise.resolve(update);
+        return Promise.resolve(filteredUpdate);
     };
 }
 
