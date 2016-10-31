@@ -22,6 +22,7 @@ function Form(props) {
     const { inputProps, values, valid, pristine, validating } = reduxInputs;
     return (
         <form>
+            <h1>Basic Example</h1>
             <Input label="Email" errorText="Your email must contain an @" {...inputProps.email}/>
 
             <h3>reduxInputs props</h3>
