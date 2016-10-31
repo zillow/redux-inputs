@@ -6,7 +6,9 @@ import reduxThunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT } from '../src/actions/actionTypes';
 import { _setInputs, setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
-import { DEFAULT_REDUX_MOUNT_POINT, getInputProps, connectWithInputs } from '../src/util/helpers';
+import { DEFAULT_REDUX_MOUNT_POINT } from '../src/util/mountPoint';
+import getInputProps from '../src/util/getInputProps';
+import connectWithInputs from '../src/util/connectWithInputs';
 import { formSelector } from '../src/util/selectors';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
 

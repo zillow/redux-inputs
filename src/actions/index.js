@@ -8,10 +8,10 @@ import _isEqual from 'lodash/isEqual';
 
 import { SET_INPUT } from './actionTypes';
 import {
-    getReduxMountPoint,
     getInputsFromState,
     inputsWithErrors
 } from '../util/helpers';
+import { getReduxMountPoint } from '../util/mountPoint';
 import log from '../util/log';
 import { getDefaultInputs } from '../reducers';
 
@@ -64,7 +64,7 @@ function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
  */
 export function setInputs(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
-        const filteredUpdate = _filterUnknownInputs(inputConfig, update)
+        const filteredUpdate = _filterUnknownInputs(inputConfig, update);
         dispatch(_setInputs(inputConfig, filteredUpdate, meta));
         if (!meta.suppressChange) {
             const state = getState();

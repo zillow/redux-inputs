@@ -40,5 +40,7 @@ export {
 /**
  * Utility functions
  */
-export { getInputProps, connectWithInputs, getInputsFromState, getReduxMountPoint } from './util/helpers';
+export { default as connectWithInputs } from './util/connectWithInputs';
+export { default as getInputProps } from './util/getInputProps';
+export { getInputsFromState, getReduxMountPoint } from './util/helpers';
 export { default as ReduxInputsWrapper } from './util/ReduxInputsWrapper';

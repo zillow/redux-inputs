@@ -3,7 +3,7 @@ import _forEach from 'lodash/forEach';
 import _omit from 'lodash/omit';
 import invariant from 'invariant';
 
-import { REDUX_MOUNT_POINT, getReduxMountPoint } from '../util/helpers';
+import { REDUX_MOUNT_POINT, getReduxMountPoint } from '../util/mountPoint';
 
 import { SET_INPUT } from '../actions/actionTypes';
 
