@@ -131,7 +131,8 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
             const { validator } = inputConfig[key];
             const { value: prev, validating: currentlyValidating } = inputsState[key] || {};
             const unchanged = _isEqual(prev, value);
-            const validationResult = unchanged && currentlyValidating && _promiseCache[key] ? _promiseCache[key]
+            const cachedValidation = unchanged && currentlyValidating && _promiseCache[key];
+            const validationResult = cachedValidation ? cachedValidation
                 : validator ? validator(value, inputsState, state, dispatch) : true;
             const hasAsync = typeof validationResult === 'object' && !!validationResult.then;
 
@@ -163,8 +164,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                 if (!change.validating) {
                     promises.push(Promise.resolve({ [key]: newState }));
                 } else {
-                    // Kick off async
-                    promises.push(_promiseCache[key] = validationResult.then(
+                    const resultPromise = cachedValidation ? cachedValidation : _promiseCache[key] = validationResult.then(
                         // Passed validation
                         () => dispatchAndReturnPromiseResult({ value }),
                         // Failed validation
@@ -173,7 +173,10 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                             error: value || '',
                             ...(typeof errorText === 'string' ? { errorText } : {})
                         })
-                    ));
+                    );
+
+                    // Kick off async
+                    promises.push(resultPromise);
                 }
             } else {
                 log.error(`

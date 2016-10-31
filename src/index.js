@@ -29,6 +29,14 @@ export {
     resetInputs
 } from './actions';
 
+export {
+    inputsSelector,
+    valuesSelector,
+    validatingSelector,
+    pristineSelector,
+    validSelector
+} from './util/selectors';
+
 /**
  * Utility functions
  */

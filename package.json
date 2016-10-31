@@ -14,7 +14,10 @@
   "scripts": {
     "prepublish": "gulp && npm run build-umd",
     "build-umd": "webpack -p lib/index.js lib/redux-inputs.playground.js",
-    "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests"
+    "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests",
+    "build-examples": "webpack --config examples/basic/webpack.config.js",
+    "watch-examples": "webpack --watch --config examples/basic/webpack.config.js",
+    "serve-examples": "browser-sync start --server --port 3001 --files examples/basic/out.js --startPath /examples/basic/"
   },
   "keywords": [
     "react",
@@ -42,7 +45,7 @@
     "reselect": "^2.5.4"
   },
   "devDependencies": {
-    "babel-plugin-transform-object-rest-spread": "^6.3.13",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
     "babel-plugin-transform-runtime": "^6.6.0",
     "babel-preset-es2015": "^6.0.15",
     "babel-preset-react": "^6.5.0",

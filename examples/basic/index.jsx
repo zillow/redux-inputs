@@ -1,9 +1,10 @@
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
-import { createInputsReducer, connectWithInputs, ReduxInputsWrapper } from '../..';
+import { createInputsReducer, connectWithInputs, ReduxInputsWrapper } from 'redux-inputs';
 import thunk from 'redux-thunk';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Input } from '../html-redux-inputs.jsx';
 
 const inputsConfig = {
     email: {
@@ -16,22 +17,14 @@ const reducer = combineReducers({
 });
 const store = createStore(reducer, applyMiddleware(thunk));
 
-let EmailInput = ({id, value, error, onChange}) => (
-    <div>
-        <input name={id} value={value} onChange={(e) => onChange(e.target.value)}/>
-        {error ? <p style={{color: 'red'}}>Your email must contain an @</p> : null}
-    </div>
-);
-EmailInput = ReduxInputsWrapper(EmailInput);
-
 function Form(props) {
     const { inputs, reduxInputs } = props;
     const { inputProps, values, valid, pristine, validating } = reduxInputs;
     return (
         <form>
-            <EmailInput {...inputProps.email}/>
+            <Input label="Email" errorText="Your email must contain an @" {...inputProps.email}/>
 
-            <h3>reduxInputs prop</h3>
+            <h3>reduxInputs props</h3>
             <ul>
                 <li>values: <pre>{JSON.stringify(values, null, 2)}</pre></li>
                 <li>valid: {valid.toString()}</li>
