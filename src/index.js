@@ -11,7 +11,7 @@ redux-inputs
  * SET_INPUT - Called after input(s) are validated and set.
  * LOADING - Called when async starts/finishes with `force` boolean.
  */
-export { SET_INPUT, LOADING } from './actions/actionTypes.js';
+export { SET_INPUT } from './actions/actionTypes.js';
 
 /**
  * Reducer creator
@@ -22,16 +22,25 @@ export { createInputsReducer } from './reducers';
  * Action creators and thunks
  */
 export {
-    createInputsThunk,
-    setInput,
+    setInputs,
     validateInputs,
     updateAndValidate,
-    loading,
+    initializeInputs,
     resetInputs
 } from './actions';
+
+export {
+    inputsSelector,
+    valuesSelector,
+    validatingSelector,
+    pristineSelector,
+    validSelector
+} from './util/selectors';
 
 /**
  * Utility functions
  */
-export { getInputProps, mapInputValues, FORM_KEY } from './util/helpers';
-export { default as Wrapper } from './util/ReduxInputsWrapper';
+export { default as connectWithInputs } from './util/connectWithInputs';
+export { default as getInputProps } from './util/getInputProps';
+export { getInputsFromState, getReduxMountPoint } from './util/helpers';
+export { default as ReduxInputsWrapper } from './util/ReduxInputsWrapper';

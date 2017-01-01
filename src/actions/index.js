@@ -1,23 +1,21 @@
+import _pick from 'lodash/pick';
 import _assign from 'lodash/assign';
 import _reduce from 'lodash/reduce';
-import _isEmpty from 'lodash/isEmpty';
 import _forEach from 'lodash/forEach';
+import _isEmpty from 'lodash/isEmpty';
 import _keys from 'lodash/keys';
-import _property from 'lodash/property';
-import invariant from 'invariant';
+import _isEqual from 'lodash/isEqual';
 
-import { SET_INPUT, LOADING } from './actionTypes';
-import { FORM_KEY, getReduxMountPoint, getMetaCreator } from '../util/helpers';
+import { SET_INPUT } from './actionTypes';
+import {
+    getInputsFromState,
+    inputsWithErrors
+} from '../util/helpers';
+import { getReduxMountPoint } from '../util/mountPoint';
 import log from '../util/log';
-import { getDefaultInputs } from '../reducers'
+import { getDefaultInputs } from '../reducers';
 
-function _getInputsStateFromGlobal(inputConfig, state) {
-    const mountPoint = getReduxMountPoint(inputConfig);
-
-    const inputsState = _property(mountPoint)(state);
-    invariant(inputsState, `[redux-inputs]: no state found at '${mountPoint}', check your reducers to make sure it exists or change reduxMountPoint in your inputConfig.`);
-    return inputsState;
-}
+const _promiseCache = {};
 
 function _filterUnknownInputs(inputConfig, inputs) {
     // Only update known inputs
@@ -31,153 +29,31 @@ function _filterUnknownInputs(inputConfig, inputs) {
     }, {});
 }
 
-function _clientSideValidate(inputConfig, inputs, state) {
-    const inputsState = _getInputsStateFromGlobal(inputConfig, state);
-    return _reduce(inputs, (result, value, key) => {
-        let { validator, asyncValidator } = inputConfig[key];
-        let newInputState = validator ? validator(value, inputsState, state) : true,
-            prev = inputsState[key] && inputsState[key].value,
-            newInputStateType = typeof newInputState;
-
-        if (!newInputState || newInputStateType === 'boolean') {
-            if (newInputState) {  // True returned, input valid
-                result[key] = {
-                    value: value,
-                    loading: !!asyncValidator // Now loading if async validator exists
-                };
-            } else { // False returned, input invalid
-                result[key] = {
-                    value: prev,
-                    error: value || '',
-                    loading: false // Not going to run async validator if invalid
-                };
-            }
-        } else if (newInputStateType === 'object') { // Object returned, set input to it
-            result[key] = newInputState;
-        } else {
-            log.error(`value returned from validator must be a boolean representing valid/invalid, or an object representing ${key}\'s new state. Got ${newInputStateType} instead.`);
-        }
-
-        return result;
-    }, {});
-}
-
-function _asyncValidate(inputConfig, inputs, state, dispatch) {
-    const inputsState = _getInputsStateFromGlobal(inputConfig, state);
-    let promises = [],
-        hasAsync = false;
-
-    // Async validation from inputConfig
-    _forEach(inputs, (input, key) => {
-        let { asyncValidator } = inputConfig[key];
-        let { error, value } = input;
-        if (asyncValidator && typeof error === 'undefined' && typeof value !== 'undefined') {
-            let prev = inputsState[key] && inputsState[key].value;
-
-            hasAsync = true;
-            // asyncValidators return promises, which resolve if input is valid.
-            promises.push(asyncValidator(value, inputsState, state, dispatch).then(
-                // Resolved
-                () => {
-                    let result = {
-                        [key]: {value}
-                    };
-                    dispatch(setInput(inputConfig, result));
-                    return result;
-                },
-
-                // Rejected
-                (newInputState) => {
-                    let result,
-                        newInputStateType = typeof newInputState;
-
-                    if (!newInputState) {  // No newInputState value returned
-                        result = {
-                            [key]: {
-                                value: prev,
-                                error: value
-                            }
-                        };
-                    } else if (newInputStateType === 'object') {
-                        result = {
-                            [key]: newInputState
-                        };
-                    } else {
-                        log.error(`newInputState value passed to asyncValidator promise reject must be an object representing ${key}\'s new state (or undefined). Got ${newInputStateType} instead.`);
-                    }
-                    dispatch(setInput(inputConfig, result));
-                    return result;
-                })
-            );
-        } else {
-            promises.push(Promise.resolve({
-                [key]: input
-            }));
-        }
-    });
-
-    if (hasAsync) {
-        dispatch(loading(inputConfig, true));
-    }
-
-    return new Promise((resolve, reject) => {
-        Promise.all(promises).then((results) => {
-            let finalResults = _reduce(results, (result, value) => _assign(result, value), {});
-            if (hasAsync) {
-                dispatch(loading(inputConfig, false));
-            }
-            const erroredInputs = _haveErrors(finalResults);
-            if (erroredInputs) {
-                reject(erroredInputs);
-            }
-            resolve(finalResults);
-        }, (e) => {
-            // Errors should not occur here
-            log.error('Unhandled promise error. Resolve your asyncValidators.');
-            console.error(e);
-            reject();
-        });
-    });
-}
-
-function _haveErrors(inputs) {
-    const erroredInputs = _reduce(inputs, (result, input, key) => {
-        if (typeof input.error !== 'undefined') {
-            result[key] = input;
-        }
-        return result;
-    }, {});
-
-    return _isEmpty(erroredInputs) ? false : erroredInputs;
-}
-
-function _inputsMetaCreator(inputConfig, action) {
-    let metaCreator = getMetaCreator(inputConfig),
-        meta = (metaCreator && metaCreator(action)) || {};
-
+export function _setInputs(inputConfig, update, meta = {}) {
     return {
-        ...meta,
-        reduxMountPoint: getReduxMountPoint(inputConfig)
-    }
+        type: SET_INPUT,
+        payload: update,
+        error: !!inputsWithErrors(update),
+        meta: {
+            reduxMountPoint: getReduxMountPoint(inputConfig),
+            ...meta
+        }
+    };
 }
 
-// Creates actions with meta information attached
-function _createActionWithMeta(inputConfig, action) {
-    return {
-        ...action,
-        meta: _inputsMetaCreator(inputConfig, action)
-    }
-}
-
-export function loading(inputConfig, force) {
-    return _createActionWithMeta(inputConfig, {
-        type: LOADING,
-        payload: force
+function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
+    _forEach(update, (input, key) => {
+        const { onChange } = inputConfig[key] || {};
+        if (onChange) {
+            onChange(input, inputsState, state, dispatch);
+        }
     });
 }
 
 /**
  * Sets inputs' states without validation
+ *
+ * Also fires onChange callbacks for changed inputs
  *
  * `update` example:
  *  {
@@ -186,16 +62,25 @@ export function loading(inputConfig, force) {
  *      }
  *  }
  */
-export function setInput(inputConfig, update) {
-    return _createActionWithMeta(inputConfig, {
-        type: SET_INPUT,
-        payload: update,
-        error: !!_haveErrors(update)
-    });
+export function setInputs(inputConfig, update, meta = {}) {
+    return (dispatch, getState) => {
+        const filteredUpdate = _filterUnknownInputs(inputConfig, update);
+        dispatch(_setInputs(inputConfig, filteredUpdate, meta));
+        if (!meta.suppressChange) {
+            const state = getState();
+            const inputsState = getInputsFromState(inputConfig, state);
+            _fireChanges(inputConfig, filteredUpdate, inputsState, state, dispatch);
+        }
+        return Promise.resolve(filteredUpdate);
+    };
 }
 
-export function resetInputs(inputConfig) {
-    return setInput(inputConfig, getDefaultInputs(inputConfig));
+export function resetInputs(inputConfig, inputKeys, meta = {}) {
+    const update = getDefaultInputs(inputConfig);
+    return setInputs(inputConfig, inputKeys ? _pick(update, inputKeys) : update, {
+        reset: true,
+        ...meta
+    });
 }
 
 /**
@@ -205,48 +90,135 @@ export function resetInputs(inputConfig) {
  * @param inputKeys {Array}
  * @returns {Thunk}
  */
-export function validateInputs(inputConfig, inputKeys) {
+export function validateInputs(inputConfig, inputKeys, meta = {}) {
     return (dispatch, getState) => {
-        const inputsState = _getInputsStateFromGlobal(inputConfig, getState());
+        const inputsState = getInputsFromState(inputConfig, getState());
         const keys = inputKeys || _keys(inputsState);
         const inputsToValidate = _reduce(keys, (result, key) => {
-            if (key === FORM_KEY) {
-                return result;
-            }
-            let input = inputsState[key];
+            const input = inputsState[key];
             if (inputConfig[key] && input) {
                 result[key] = typeof input.error !== 'undefined' ? input.error : input.value;
             }
             return result;
         }, {});
-        const updateAndValidateActionCreator = updateAndValidate(inputConfig, inputsToValidate);
-        return updateAndValidateActionCreator(dispatch, getState);
-    }
+        return updateAndValidate(inputConfig, inputsToValidate, {
+            ...meta,
+            validate: true
+        })(dispatch, getState);
+    };
 }
 
-export function updateAndValidate(inputConfig, update) {
+export function updateAndValidate(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
-        let inputs = _filterUnknownInputs(inputConfig, update)
+        const inputs = _filterUnknownInputs(inputConfig, update);
 
         if (_isEmpty(inputs)) {
             return Promise.resolve();
         }
 
-        // Parse and client-side validate inputs and dispatch result
-        let results = _clientSideValidate(inputConfig, inputs, getState());
+        const state = getState();
+        const inputsState = getInputsFromState(inputConfig, state);
+        const promises = [];
 
-        dispatch(setInput(inputConfig, results));
+        const createNewState = newInputState => meta.initialize ? ({
+            pristine: true,
+            ...newInputState
+        }) : newInputState;
 
-        return _asyncValidate(inputConfig, results, getState(), dispatch);
-    }
+
+        const changes = _reduce(inputs, (result, value, key) => {
+
+            const { validator } = inputConfig[key];
+            const { value: prev, validating: currentlyValidating } = inputsState[key] || {};
+            const unchanged = _isEqual(prev, value);
+            const cachedValidation = unchanged && currentlyValidating && _promiseCache[key];
+            const validationResult = cachedValidation ? cachedValidation
+                : validator ? validator(value, inputsState, state, dispatch) : true;
+            const hasAsync = typeof validationResult === 'object' && !!validationResult.then;
+
+            const dispatchAndReturnPromiseResult = inputState =>
+                setInputs(inputConfig, { [key]: createNewState(inputState) }, meta)(dispatch, getState);
+
+            if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync || !validationResult) { // Or Promise
+                const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
+                    value: value,
+                    validating: currentlyValidating || (hasAsync && !unchanged) // Will be validating if async validator exists
+                }) : ({ // False returned, input invalid
+                    value: prev,
+                    error: value || '',
+                    validating: false
+                });
+
+                // Add errorText if validator returned a string
+                if (typeof validationResult === 'string') {
+                    change.errorText = validationResult;
+                }
+
+                const newState = createNewState(change);
+
+                // Only fire setInputs on state that is different than current
+                if (!_isEqual(newState, inputsState[key])) {
+                    result[key] = newState;
+                }
+
+                if (!change.validating) {
+                    promises.push(Promise.resolve({ [key]: newState }));
+                } else {
+                    const resultPromise = cachedValidation ? cachedValidation : _promiseCache[key] = validationResult.then(
+                        // Passed validation
+                        () => dispatchAndReturnPromiseResult({ value }),
+                        // Failed validation
+                        errorText => dispatchAndReturnPromiseResult({
+                            value: prev,
+                            error: value || '',
+                            ...(typeof errorText === 'string' ? { errorText } : {})
+                        })
+                    );
+
+                    // Kick off async
+                    promises.push(resultPromise);
+                }
+            } else {
+                log.error(`
+                Value returned from validator must be a 
+                boolean representing valid/invalid, a string representing errorText, or a promise for performing async 
+                validation. Got ${typeof validationResult} instead.
+            `);
+            }
+
+            return result;
+        }, {});
+
+        if (!_isEmpty(changes)) {
+            setInputs(inputConfig, changes, meta)(dispatch, getState);
+        }
+
+        return new Promise((resolve, reject) => {
+            Promise.all(promises).then(results => {
+                const resultObject = _assign({}, ...results);
+
+                const erroredInputs = inputsWithErrors(resultObject);
+                if (erroredInputs) {
+                    reject(erroredInputs);
+                } else {
+                    resolve(resultObject);
+                }
+            });
+        });
+    };
 }
 
-/**
- * Creates a reusable thunk for setting and validating inputs
- *
- * @param inputConfig
- * @returns {Function}
- */
-export function createInputsThunk(inputConfig) {
-    return update => updateAndValidate(inputConfig, update);
+export function initializeInputs(inputconfig, update, meta = {}) {
+    return updateAndValidate(inputconfig, update, {
+        initialize: true,
+        ...meta
+    });
 }
+
+export const bindActions = inputConfig => ({
+    setInputs: (update, meta) => setInputs(inputConfig, update, meta),
+    updateAndValidate: (update, meta) => updateAndValidate(inputConfig, update, meta),
+    validateInputs: (inputKeys, meta) => validateInputs(inputConfig, inputKeys, meta),
+    resetInputs: (inputKeys, meta) => resetInputs(inputConfig, inputKeys, meta),
+    initializeInputs: (update, meta) => initializeInputs(inputConfig, update, meta)
+});
