@@ -12,12 +12,11 @@
   ],
   "main": "lib/index.js",
   "scripts": {
-    "prepublish": "gulp && npm run build-umd",
-    "build-umd": "webpack -p lib/index.js lib/redux-inputs.playground.js",
+    "prepublish": "gulp",
     "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests",
     "build-examples": "webpack --config examples/webpack.config.js",
-    "watch-examples": "webpack --watch --config examples/webpack.config.js",
-    "serve-examples": "browser-sync start --server --port 3001 --files examples/*/out.js --startPath /examples/basic/"
+    "watch-examples": "webpack --watch --config docs/examples/webpack.config.js",
+    "serve-examples": "browser-sync start --server --port 3001 --files docs/examples/*/out.js --startPath /docs/examples/basic/"
   },
   "keywords": [
     "react",

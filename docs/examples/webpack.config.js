@@ -16,13 +16,13 @@ function genExampleConfig(dir) {
         },
         resolve: {
             alias: {
-                'redux-inputs': path.join(dir, '..', '..', 'lib')
+                'redux-inputs': path.join(dir, '..', '..', '..', 'lib')
             }
         }
     };
 }
 
 module.exports = [
-    genExampleConfig(path.resolve('./examples/basic/')),
-    genExampleConfig(path.resolve('./examples/submit/'))
+    genExampleConfig(path.resolve('./docs/examples/basic/')),
+    genExampleConfig(path.resolve('./docs/examples/submit/'))
 ];

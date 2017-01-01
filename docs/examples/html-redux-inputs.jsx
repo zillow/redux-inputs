@@ -22,9 +22,12 @@ class Field extends React.Component {
         if (error && errorText) {
             errorComponent = <p style={{color: 'red'}}>{errorText}</p>;
         }
-
+        let className = '';
+        if (error) {
+            className = 'form-field-error';
+        }
         return (
-            <div>
+            <div className={className}>
                 {labelComponent}
                 {this.props.children}
                 {errorComponent}

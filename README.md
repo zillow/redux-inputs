@@ -8,7 +8,7 @@
 
 - [Getting Started](docs/gettingStarted.md)
 - [API](docs/api.md)
-- [Interactive Demo](./examples.html)
+- [Examples](https://zillow.github.io/redux-inputs/examples/)
 
 ## Installation
 
@@ -56,7 +56,7 @@ function Form(props) {
 const FormContainer = connectWithInputs(inputsConfig)(s => s)(Form);
 ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
 ```
- 
+
 ## Contributing
 
 ### Build

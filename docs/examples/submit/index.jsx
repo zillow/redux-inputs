@@ -23,7 +23,7 @@ export const inputsConfig = {
         validator: (v) => {
             // Validators can also return a new input state to provide more information about the error
             if (typeof v === 'undefined' || v === '') {
-                return 'Required';
+                return 'Required'; // This will set error text to be the string 'Required'
             } else if (isNaN(Number(v))) {
                 return 'Must be a number';
             } else if (Number(v) < 0 || Number(v) > 20) {
@@ -95,8 +95,8 @@ class Form extends React.Component {
         const { zipCode, bedrooms, phone } = inputProps;
 
         return (
-            <div className="zsg-layout">
-                <div className="zsg-layout-width zsg-layout-top zsg-layout-bottom">
+            <div>
+                <div>
                     <h1>Submit Example</h1>
                     <p>Use <a href="https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en">redux devtools</a> to view state changes</p>
                     <form onSubmit={this.onSubmit}>
@@ -113,9 +113,9 @@ class Form extends React.Component {
                                formatter={phoneFormatter}
                                {...phone}
                         />
-                        <button onClick={this.onSubmit}>Submit</button>
+                        <button onClick={this.onSubmit} style={{marginBottom: '1rem'}}>Submit</button>
                     </form>
-                    <pre>{this.state.submitMessage}</pre>
+                    { this.state.submitMessage && <pre>{this.state.submitMessage}</pre> }
                 </div>
             </div>
         );
