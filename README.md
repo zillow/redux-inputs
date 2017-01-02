@@ -4,6 +4,21 @@
 
 `redux-inputs` works with redux to validate and store values from inputs and forms.
 
+## Features
+
+- Declarative validation
+- Declarative parsing
+- Declarative formatting
+- Async validation
+- Per-input validation
+- Cross-field validation
+- Custom input components
+- Programatic value collection
+- Programatic value initialization
+- Progamatic value modification
+- Programatic input reset
+
+
 ## Docs
 
 - [Getting Started](docs/gettingStarted.md)
