@@ -59,7 +59,8 @@ let EmailInput = ({id, value, error, onChange}) => (
 EmailInput = ReduxInputsWrapper(EmailInput);
 
 function Form(props) {
-    const { inputs, inputProps } = props;
+    const { inputs, reduxInputs } = props;
+    const { inputProps } = reduxInputs;
     return (
         <form>
             <EmailInput {...inputProps.email}/>
