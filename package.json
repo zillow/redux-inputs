@@ -16,7 +16,7 @@
     "test": "node node_modules/mocha/bin/mocha --compilers js:babel-register tests",
     "build-examples": "webpack --config examples/webpack.config.js",
     "watch-examples": "webpack --watch --config docs/examples/webpack.config.js",
-    "serve-examples": "browser-sync start --server --port 3001 --files docs/examples/*/out.js --startPath /docs/examples/basic/"
+    "serve-examples": "browser-sync start --server --port 3001 --files docs/examples/*/out.js --startPath /docs/examples/"
   },
   "keywords": [
     "react",

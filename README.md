@@ -76,6 +76,10 @@ ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.g
 
     gulp
 
+### Examples
+
+    npm run watch-examples & npm run serve-examples
+
 ### Tests
 
     gulp eslint
