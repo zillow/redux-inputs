@@ -50,17 +50,17 @@ const reducer = combineReducers({
 });
 const store = createStore(reducer, applyMiddleware(thunk));
 
-const EmailInput = ({id, value, error, onChange}) => (
+const Field = ({id, value, error, onChange, errorText}) => (
     <div>
         <input name={id} value={value} onChange={(e) => onChange(e.target.value)}/>
-        {error ? <p style={{color: 'red'}}>Your email must contain an @</p> : null}
+        {error ? <p style={{color: 'red'}}>{errorText}</p> : null}
     </div>
 );
-const WrappedEmailInput = ReduxInputsWrapper(EmailInput);
+const ReduxInputField = ReduxInputsWrapper(Input);
 
 const Form = ({ inputs, reduxInputs }) => (
     <form>
-        <WrappedEmailInput {...reduxInputs.inputProps.email}/>
+        <ReduxInputField errorText="Your email must contain an @" {...reduxInputs.inputProps.email}/>
         <h3>Input state</h3>
         <pre>{JSON.stringify(inputs, null, 2)}</pre>
     </form>
