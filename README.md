@@ -34,10 +34,9 @@
 ```jsx
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createStore } from 'redux';
 import { createInputsReducer, connectWithInputs, ReduxInputsWrapper } from 'redux-inputs';
 import { Provider } from 'react-redux';
-import thunk = from 'redux-thunk';
 
 const inputsConfig = {
     email: {
@@ -45,30 +44,26 @@ const inputsConfig = {
         validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
     }
 };
-const reducer = combineReducers({
-    inputs: createInputsReducer(inputsConfig)
-});
-const store = createStore(reducer, applyMiddleware(thunk));
 
-let EmailInput = ({id, value, error, onChange}) => (
+const store = createStore(createInputsReducer(inputsConfig));
+
+const EmailInput = ReduxInputsWrapper(({ id, value, error, onChange }) => (
     <div>
         <input name={id} value={value} onChange={(e) => onChange(e.target.value)}/>
         {error ? <p style={{color: 'red'}}>Your email must contain an @</p> : null}
     </div>
-);
-EmailInput = ReduxInputsWrapper(EmailInput);
+));
 
-function Form(props) {
-    const { inputs, reduxInputs } = props;
-    const { inputProps } = reduxInputs;
+const Form = ({ reduxInputs }) => {
     return (
         <form>
-            <EmailInput {...inputProps.email}/>
+            <EmailInput {...reduxInputs.inputProps.email}/>
             <h3>Input state</h3>
             <pre>{JSON.stringify(inputs, null, 2)}</pre>
         </form>
     );
-}
+};
+
 const FormContainer = connectWithInputs(inputsConfig)(s => s)(Form);
 ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
 ```
