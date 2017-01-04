@@ -50,25 +50,22 @@ const reducer = combineReducers({
 });
 const store = createStore(reducer, applyMiddleware(thunk));
 
-let EmailInput = ({id, value, error, onChange}) => (
+const EmailInput = ({id, value, error, onChange}) => (
     <div>
         <input name={id} value={value} onChange={(e) => onChange(e.target.value)}/>
         {error ? <p style={{color: 'red'}}>Your email must contain an @</p> : null}
     </div>
 );
-EmailInput = ReduxInputsWrapper(EmailInput);
+const WrappedEmailInput = ReduxInputsWrapper(EmailInput);
 
-function Form(props) {
-    const { inputs, reduxInputs } = props;
-    const { inputProps } = reduxInputs;
-    return (
-        <form>
-            <EmailInput {...inputProps.email}/>
-            <h3>Input state</h3>
-            <pre>{JSON.stringify(inputs, null, 2)}</pre>
-        </form>
-    );
-}
+const Form = ({ inputs, reduxInputs }) => (
+    <form>
+        <WrappedEmailInput {...reduxInputs.inputProps.email}/>
+        <h3>Input state</h3>
+        <pre>{JSON.stringify(inputs, null, 2)}</pre>
+    </form>
+);
+
 const FormContainer = connectWithInputs(inputsConfig)(s => s)(Form);
 ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
 ```
