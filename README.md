@@ -39,17 +39,22 @@ import { createInputsReducer, connectWithInputs, ReduxInputsWrapper } from 'redu
 import { Provider } from 'react-redux';
 import thunk = from 'redux-thunk';
 
+// Define configuration for this form. A single input named 'email' with a default value and a function to determine validity.
 const inputsConfig = {
     email: {
         defaultValue: 'test@example.com',
         validator: (value) => typeof value === 'string' && value.indexOf('@') >= 0
     }
 };
+
+// Create redux store with a reducer created with the createInputsReducer function.
 const reducer = combineReducers({
     inputs: createInputsReducer(inputsConfig)
 });
 const store = createStore(reducer, applyMiddleware(thunk));
 
+// Define our own Field component, and wrap it in a ReduxInputsWrapper to easily create a compatible input component.
+// Integration with other ui component libraries, such as material-ui, would be done here.
 const Field = ({id, value, error, onChange, errorText}) => (
     <div>
         <input name={id} value={value} onChange={(e) => onChange(e.target.value)}/>
@@ -58,6 +63,7 @@ const Field = ({id, value, error, onChange, errorText}) => (
 );
 const ReduxInputsField = ReduxInputsWrapper(Input);
 
+// Use the newly created ReduxInputsField by spreading in reduxInputs.inputProps.email object.
 const Form = ({ inputs, reduxInputs }) => (
     <form>
         <ReduxInputsField errorText="Your email must contain an @" {...reduxInputs.inputProps.email}/>
@@ -66,6 +72,7 @@ const Form = ({ inputs, reduxInputs }) => (
     </form>
 );
 
+// Hook the form up to the store with connectWithInputs, a wrapped version of react-redux's connect.
 const FormContainer = connectWithInputs(inputsConfig)(s => s)(Form);
 ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.getElementById('container'));
 ```
