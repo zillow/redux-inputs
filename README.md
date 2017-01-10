@@ -61,7 +61,7 @@ const Field = ({id, value, error, onChange, errorText}) => (
         {error ? <p style={{color: 'red'}}>{errorText}</p> : null}
     </div>
 );
-const ReduxInputsField = ReduxInputsWrapper(Input);
+const ReduxInputsField = ReduxInputsWrapper(Field);
 
 // Use the newly created ReduxInputsField by spreading in reduxInputs.inputProps.email object.
 const Form = ({ inputs, reduxInputs }) => (
