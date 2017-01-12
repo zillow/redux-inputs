@@ -1,3 +1,7 @@
+# 2.0.1
+- ReduxInputsWrapper
+    - Allow wrapped components to access the native onChange callback
+
 # 2.0.0
 ### Breaking changes
 - inputsConfig
