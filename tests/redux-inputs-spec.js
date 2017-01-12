@@ -1055,27 +1055,35 @@ describe('getInputProps', () => {
 const promiseThunk = () => Promise.resolve();
 describe('createOnChangeWithTransform', () => {
     it('returns a function', () => {
-        expect(createOnChangeWithTransform('id', noop)).to.be.a('function');
+        expect(createOnChangeWithTransform('id', noop, noop)).to.be.a('function');
     });
     it('returned function runs onChangeTransform on the given event', () => {
         const onChangeTransform = sinon.spy();
-        const actual = createOnChangeWithTransform(promiseThunk, onChangeTransform);
+        const actual = createOnChangeWithTransform(promiseThunk, noop, onChangeTransform);
         actual('val');
         expect(onChangeTransform.calledWith('val')).to.be.true;
     });
     it('returned function runs parser on the onChangeTransform value', () => {
         const parser = sinon.spy();
-        const actual = createOnChangeWithTransform(promiseThunk, () => 'val2', parser);
+        const actual = createOnChangeWithTransform(promiseThunk, noop, () => 'val2', parser);
         actual('val');
         expect(parser.calledWith('val2')).to.be.true;
     });
     it('returned function calls dispatchChange with an object with parsed value', () => {
         const dispatchChange = sinon.spy(promiseThunk);
-        const actual = createOnChangeWithTransform(dispatchChange, () => 'val2');
+        const actual = createOnChangeWithTransform(dispatchChange, noop, () => 'val2');
         actual('val');
         expect(dispatchChange.calledOnce).to.be.true;
         const args = dispatchChange.args[0];
         expect(args[0]).to.deep.equal('val2');
+    });
+    it('returned function calls onChange if it exists with the native event', () => {
+        const onChange = sinon.spy();
+        const actual = createOnChangeWithTransform(promiseThunk, onChange);
+        actual('val');
+        expect(onChange.calledOnce).to.be.true;
+        const args = onChange.args[0];
+        expect(args[0]).to.deep.equal('val');
     });
     it('returned function returns a promise', () => {
         const onChange = createOnChangeWithTransform(promiseThunk);

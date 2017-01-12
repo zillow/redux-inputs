@@ -15,7 +15,7 @@ This higher-order component is used to create components that can be used with `
 - `errorText` *(string)*
 - `onChange` *(function)*: Takes one parameter - the new value
 - `validating` *(boolean)*: True while async validation is in progress
-- `pristine` *(boolean)*: True if the input hasn't been touched or set by anything other than defaultValue or initialization 
+- `pristine` *(boolean)*: True if the input hasn't been touched or set by anything other than defaultValue or initialization
 
 #### Props added to composed component
 
@@ -25,18 +25,19 @@ This higher-order component is used to create components that can be used with `
     - `inputs` *(Object)* object of changed input(s)
 - `onValidationFail(inputs:Object)` *(function)* callback after failed validation - same as reject of updateAndValidate
     - `inputs` *(Object)* object of changed input(s)
-    
-The `ReduxInputsWrapper` looks at the input and turns it into `value`, and `error` props, where `value` is equal to 
-`inputs.email.value` if `inputs.email.error` is undefined, or `inputs.email.error` otherwise. The `ReduxInputsWrapper` 
-passes down any other properties of the input state untouched.
+
+The `ReduxInputsWrapper` looks at the input and turns it into `value`, and `error` props, where `value` is equal to
+`inputs.email.value` if `inputs.email.error` is undefined, or `inputs.email.error` otherwise. The `ReduxInputsWrapper`
+passes down any other properties of the input state untouched, with the exception of `onChange` which will be called
+after redux-inputs changes are dispatched.
 Then this input can be used in the render of connected `YourForm` like this:
-    
+
     render() {
         const { inputProps } = this.props.reduxInputs;
-        
+
         return (
             <Input {...inputProps.email}/>
         );
     }
-    
+
 Changes from this input will be validated and dispatched, then passed back through component update.
