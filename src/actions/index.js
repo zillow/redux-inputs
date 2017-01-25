@@ -108,6 +108,31 @@ export function validateInputs(inputConfig, inputKeys, meta = {}) {
     };
 }
 
+/**
+ * Add errors to the given inputKeys
+ *
+ * @param inputsConfig
+ * @param inputKeys {Array}
+ * @returns {Thunk}
+ */
+export function setErrors(inputsConfig, inputKeys = [], meta = {}) {
+    return (dispatch, getState) => {
+        const inputsState = getInputsFromState(inputsConfig, getState());
+        const update = {};
+        inputKeys.forEach((key) => {
+            // Keep the existing value and async validating state, overwrite
+            // everything else.
+            const input = _pick(inputsState[key], ['value', 'validating']);
+            update[key] = {
+                ...input,
+                error: inputsState[key].value,
+                pristine: false
+            };
+        });
+        dispatch(setInputs(inputsConfig, update, meta));
+    };
+}
+
 export function updateAndValidate(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
         const inputs = _filterUnknownInputs(inputConfig, update);
@@ -219,6 +244,7 @@ export const bindActions = inputConfig => ({
     setInputs: (update, meta) => setInputs(inputConfig, update, meta),
     updateAndValidate: (update, meta) => updateAndValidate(inputConfig, update, meta),
     validateInputs: (inputKeys, meta) => validateInputs(inputConfig, inputKeys, meta),
+    setErrors: (inputKeys, meta) => setErrors(inputConfig, inputKeys, meta),
     resetInputs: (inputKeys, meta) => resetInputs(inputConfig, inputKeys, meta),
     initializeInputs: (update, meta) => initializeInputs(inputConfig, update, meta)
 });
