@@ -118,19 +118,20 @@ export function validateInputs(inputConfig, inputKeys, meta = {}) {
 export function setErrors(inputsConfig, inputKeys = [], meta = {}) {
     return (dispatch, getState) => {
         const inputsState = getInputsFromState(inputsConfig, getState());
-        const update = {};
-        inputKeys.forEach((key) => {
+        const update = _reduce(inputKeys, (result, key) => {
             // Keep the existing value and async validating state, overwrite
             // everything else.
             const input = _pick(inputsState[key], ['value', 'validating']);
-            update[key] = {
+            result[key] = {
                 ...input,
-                error: inputsState[key].value,
-                pristine: false
+                error: inputsState[key].value || ''
             };
-        });
-        dispatch(setInputs(inputsConfig, update, meta));
-    };
+            return result;
+        }, {});
+
+        return dispatch(setInputs(inputsConfig, update, meta));
+    }
+
 }
 
 export function updateAndValidate(inputConfig, update, meta = {}) {
