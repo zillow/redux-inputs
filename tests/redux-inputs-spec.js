@@ -863,7 +863,7 @@ describe('setErrors thunk', () => {
         }];
         const store = mockStore({ inputs: {
             email: { value: 'test@test.com' },
-            name: {} ,
+            name: {},
             phone: { value: '(555) 555 - 5555'}
         } });
         const thunk = setErrors({

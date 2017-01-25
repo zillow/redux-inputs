@@ -130,8 +130,7 @@ export function setErrors(inputsConfig, inputKeys = [], meta = {}) {
         }, {});
 
         return dispatch(setInputs(inputsConfig, update, meta));
-    }
-
+    };
 }
 
 export function updateAndValidate(inputConfig, update, meta = {}) {
