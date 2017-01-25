@@ -37,7 +37,7 @@ import ReactDOM from 'react-dom';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { createInputsReducer, connectWithInputs, ReduxInputsWrapper } from 'redux-inputs';
 import { Provider } from 'react-redux';
-import thunk = from 'redux-thunk';
+import thunk from 'redux-thunk';
 
 // Define configuration for this form. A single input named 'email' with a default value and a function to determine validity.
 const inputsConfig = {
