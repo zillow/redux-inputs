@@ -35,7 +35,8 @@ Here is the shape of the default `reduxInputs` prop:
             initializeInputs: React.PropTypes.func,
             values: React.PropTypes.object,
             validating: React.PropTypes.bool,
-            pristine: React.PropTypes.bool
+            pristine: React.PropTypes.bool,
+            valid: React.PropTypes.bool
         })
     };
 
