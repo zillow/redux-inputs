@@ -22,7 +22,7 @@ Example change
         name: 'larry'
     }
     
-### `initializeInputs(  winputsConfig, change, meta)`
+### `initializeInputs(inputsConfig, change, meta)`
 
 Same as updateAndValidate, but all inputs are still considered `pristine` after updating.
 
