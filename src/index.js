@@ -25,6 +25,8 @@ export {
     setInputs,
     validateInputs,
     updateAndValidate,
+    setValues,
+    setErrors,
     initializeInputs,
     resetInputs
 } from './actions';
