@@ -1,3 +1,8 @@
+# 2.1.0
+### Added
+- setErrors action creator
+- setValues action creator
+
 # 2.0.1
 - ReduxInputsWrapper
     - Allow wrapped components to access the native onChange callback
@@ -6,22 +11,22 @@
 ### Breaking changes
 - inputsConfig
     - asyncValidator consolidated into validator. Now return a promise for async validation.
-    - Removed ability to set inputState from validators. Instead, return an errorText string from the validate 
+    - Removed ability to set inputState from validators. Instead, return an errorText string from the validate
         function or promise rejection which is added to the inputState. This was the most common use case.
     - Removed _form.metaCreator. This can be done via redux middleware instead.
     - Removed _form, added _reduxMountPoint at the root level
-- Renamed setInput -> setInputs for consistency 
+- Renamed setInput -> setInputs for consistency
 - Actions
-    - setInputs and resetInputs are now thunks instead of plain action creators, to support `onChange`. 
-   
-    
+    - setInputs and resetInputs are now thunks instead of plain action creators, to support `onChange`.
+
+
 ### Added
-- inputsConfig 
-    - `onChange(value, inputsState, state, dispatch)` callback 
-    
+- inputsConfig
+    - `onChange(value, inputsState, state, dispatch)` callback
+
 - Actions
     - `initializeInputs(inputConfig, update, meta)` - Just like updateAndValidate, but keeps inputs pristine
-    
-- connectWithInputs - new helper function that wraps react-redux's connect and passes down form state, inputProps, 
+
+- connectWithInputs - new helper function that wraps react-redux's connect and passes down form state, inputProps,
     and pre-bound actions to connected components.
-    
+
