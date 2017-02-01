@@ -5,6 +5,7 @@ import _forEach from 'lodash/forEach';
 import _isEmpty from 'lodash/isEmpty';
 import _keys from 'lodash/keys';
 import _isEqual from 'lodash/isEqual';
+import _mapValues from 'lodash/mapValues';
 
 import { SET_INPUT } from './actionTypes';
 import {
@@ -105,6 +106,21 @@ export function validateInputs(inputConfig, inputKeys, meta = {}) {
             ...meta,
             validate: true
         })(dispatch, getState);
+    };
+}
+
+/**
+ * Shortcut for setting just the values of the given inputs.
+ *
+ * @param inputsConfig
+ * @param newValues {Object} key-value pair of new values
+ * @param meta {Object}
+ * @returns {Thunk}
+ */
+export function setValues(inputsConfig, newValues = {}, meta = {}) {
+    return (dispatch) => {
+        const update = _mapValues(newValues, (value) => ({ value }));
+        return dispatch(setInputs(inputsConfig, update, meta));
     };
 }
 
@@ -244,6 +260,7 @@ export const bindActions = inputConfig => ({
     setInputs: (update, meta) => setInputs(inputConfig, update, meta),
     updateAndValidate: (update, meta) => updateAndValidate(inputConfig, update, meta),
     validateInputs: (inputKeys, meta) => validateInputs(inputConfig, inputKeys, meta),
+    setValues: (newValues, meta) => setValues(inputConfig, newValues, meta),
     setErrors: (inputKeys, meta) => setErrors(inputConfig, inputKeys, meta),
     resetInputs: (inputKeys, meta) => resetInputs(inputConfig, inputKeys, meta),
     initializeInputs: (update, meta) => initializeInputs(inputConfig, update, meta)

@@ -47,6 +47,15 @@ Example newInput:
         }
     }
 
+### `setValues(inputsConfig, newValues, meta)`
+
+Thunk that dispatches `setInputs` with new value properties only.
+
+#### Arguments
+- `inputsConfig` *(Object)*
+- `newValues` *(Object)* key-value pairs of input key and new value to be set.
+- `meta` *(Object)* [optional] extra meta information to add to the action object(s)
+
 ### `setErrors(inputsConfig, inputKeys, meta)`
 
 Sets the error property for the given inputs.
