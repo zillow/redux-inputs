@@ -47,6 +47,15 @@ Example newInput:
         }
     }
 
+### `setErrors(inputsConfig, inputKeys, meta)`
+
+Sets the error property for the given inputs.
+
+#### Arguments
+- `inputsConfig` *(Object)*
+- `inputKeys` *(Array)* Array of input keys found in inputsConfig.
+- `meta` *(Object)* [optional] extra meta information to add to the action object(s)
+
 ### `validateInputs(inputsConfig, inputKeys, meta)`
 
 Thunk that returns a Promise which resolves if all inputs are valid, rejects if one or more inputs are invalid.

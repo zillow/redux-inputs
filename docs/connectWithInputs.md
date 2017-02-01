@@ -29,6 +29,7 @@ Here is the shape of the default `reduxInputs` prop:
         reduxInputs = React.PropTypes.shape({
             inputProps: React.PropTypes.object,
             setInputs: React.PropTypes.func,
+            setErrors: React.PropTypes.func,
             updateAndValidate: React.PropTypes.func,
             validateInputs: React.PropTypes.func,
             resetInputs: React.PropTypes.func,
@@ -45,6 +46,7 @@ Here is the shape of the default `reduxInputs` prop:
 - `inputProps` *{Object}* contains props for each input in the inputsConfig
 
 - `setInputs(newState, meta)`
+- `setErrors(inputKeys, meta)`
 - `updateAndValidate(changes, meta)`
 - `validateInputs(inputKeys, meta)`
 - `resetInputs(inputKeys, meta)`

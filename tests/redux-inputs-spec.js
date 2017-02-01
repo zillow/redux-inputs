@@ -5,7 +5,7 @@ import configureMockStore from 'redux-mock-store';
 import reduxThunk from 'redux-thunk';
 import { createInputsReducer } from '../src';
 import { SET_INPUT } from '../src/actions/actionTypes';
-import { _setInputs, setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs } from '../src/actions';
+import { _setInputs, setInputs, updateAndValidate, validateInputs, resetInputs, setErrors, initializeInputs } from '../src/actions';
 import { DEFAULT_REDUX_MOUNT_POINT } from '../src/util/mountPoint';
 import getInputProps from '../src/util/getInputProps';
 import connectWithInputs from '../src/util/connectWithInputs';
@@ -848,6 +848,57 @@ describe('validateInputs thunk', () => {
             expect(erroredInputs).to.equal({
                 email: { value: undefined, error: '', validating: false }
             });
+        });
+    });
+});
+
+
+describe('setErrors thunk', () => {
+    it('sets current value to error property', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: { email: { value: 'test@test.com', error: 'test@test.com' } },
+            error: true,
+            meta: { reduxMountPoint: 'inputs' }
+        }];
+        const store = mockStore({ inputs: {
+            email: { value: 'test@test.com' },
+            name: {},
+            phone: { value: '(555) 555 - 5555'}
+        } });
+        const thunk = setErrors({
+            email: {},
+            name: {},
+            phone: {}
+        }, ['email']);
+
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
+    });
+    it('sets current value to error property even if value is undefined', () => {
+        const expectedActions = [{
+            type: SET_INPUT,
+            payload: {
+                name: { error: '' },
+                phone: { value: '(555) 555 - 5555', error: '(555) 555 - 5555'}
+            },
+            error: true,
+            meta: { reduxMountPoint: 'inputs' }
+        }];
+        const store = mockStore({ inputs: {
+            email: { value: 'test@test.com' },
+            name: {},
+            phone: { value: '(555) 555 - 5555'}
+        } });
+        const thunk = setErrors({
+            email: {},
+            name: {},
+            phone: {}
+        }, ['name', 'phone']);
+
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
         });
     });
 });
