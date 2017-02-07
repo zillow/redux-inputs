@@ -1223,6 +1223,17 @@ describe('Selectors', () => {
             }
         }
     };
+    const testState3 = {
+        inputs: {
+            email: {
+                value: 'test@test.com',
+                pristine: true
+            },
+            name: {
+                value: 'fred'
+            }
+        }
+    };
     describe('values selector', () => {
         it('works with defined values', () => {
             const { values } = formSelector({})(testState1);
@@ -1242,6 +1253,12 @@ describe('Selectors', () => {
             const { values } = formSelector({})({inputs: {}});
             expect(values).to.deep.equal({});
         });
+        it('works with keys subset', () => {
+            const { values } = formSelector({}, ['name'])(testState1);
+            expect(values).to.deep.equal({
+                name: 'bobby'
+            });
+        });
     });
     describe('validating selector', () => {
         it('works with no validating inputs', () => {
@@ -1255,6 +1272,13 @@ describe('Selectors', () => {
         it('works with no inputs', () => {
             const { validating } = formSelector({})({inputs: {}});
             expect(validating).to.be.false;
+        });
+        it('works with keys subset', () => {
+            const { validating: validatingEmail } = formSelector({}, ['email'])(testState2);
+            expect(validatingEmail).to.be.true;
+
+            const { validating: validatingName } = formSelector({}, ['name'])(testState2);
+            expect(validatingName).to.be.false;
         });
     });
     describe('valid selector', () => {
@@ -1270,6 +1294,13 @@ describe('Selectors', () => {
             const { valid } = formSelector({})({inputs: {}});
             expect(valid).to.be.true;
         });
+        it('works with keys subset', () => {
+            const { valid: validEmail } = formSelector({}, ['email'])(testState2);
+            expect(validEmail).to.be.true;
+
+            const { valid: validName } = formSelector({}, ['name'])(testState2);
+            expect(validName).to.be.false;
+        });
     });
     describe('pristine selector', () => {
         it('works with pristine inputs', () => {
@@ -1283,6 +1314,13 @@ describe('Selectors', () => {
         it('works with no inputs', () => {
             const { pristine } = formSelector({})({inputs: {}});
             expect(pristine).to.be.true;
+        });
+        it('works with keys subset', () => {
+            const { pristine: pristineEmail } = formSelector({}, ['email'])(testState3);
+            expect(pristineEmail).to.be.true;
+
+            const { pristine: pristineName } = formSelector({}, ['name'])(testState3);
+            expect(pristineName).to.be.false;
         });
     });
 });
