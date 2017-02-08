@@ -13,33 +13,33 @@ const areInputsValidating = inputs => _some(inputs, input => input.validating);
 const areInputsPristine = inputs => !_some(inputs, input => !input.pristine);
 const areInputsValid = inputs => !inputsWithErrors(inputs);
 
-export const inputsSelector = inputConfig => state => getInputsFromState(inputConfig, state);
+export const inputsSelector = (inputConfig, inputKeys) => state => getInputsFromState(inputConfig, state, inputKeys);
 
-export const valuesSelector = inputConfig => createSelector(
-    inputsSelector(inputConfig),
+export const valuesSelector = (inputConfig, inputKeys) => createSelector(
+    inputsSelector(inputConfig, inputKeys),
     getValuesFromInputs
 );
 
-export const validatingSelector = inputConfig => createSelector(
-    inputsSelector(inputConfig),
+export const validatingSelector = (inputConfig, inputKeys) => createSelector(
+    inputsSelector(inputConfig, inputKeys),
     areInputsValidating
 );
 
-export const pristineSelector = inputConfig => createSelector(
-    inputsSelector(inputConfig),
+export const pristineSelector = (inputConfig, inputKeys) => createSelector(
+    inputsSelector(inputConfig, inputKeys),
     areInputsPristine
 );
 
-export const validSelector = inputConfig => createSelector(
-    inputsSelector(inputConfig),
+export const validSelector = (inputConfig, inputKeys) => createSelector(
+    inputsSelector(inputConfig, inputKeys),
     areInputsValid
 );
 
-export const formSelector = inputConfig => createSelector(
-    valuesSelector(inputConfig),
-    validatingSelector(inputConfig),
-    pristineSelector(inputConfig),
-    validSelector(inputConfig),
+export const formSelector = (inputConfig, inputKeys) => createSelector(
+    valuesSelector(inputConfig, inputKeys),
+    validatingSelector(inputConfig, inputKeys),
+    pristineSelector(inputConfig, inputKeys),
+    validSelector(inputConfig, inputKeys),
     (values, validating, pristine, valid) => ({
         values,
         validating,

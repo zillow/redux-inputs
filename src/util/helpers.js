@@ -5,13 +5,23 @@ import _isEmpty from 'lodash/isEmpty';
 
 import { getReduxMountPoint, DEFAULT_REDUX_MOUNT_POINT } from './mountPoint';
 
-export function getInputsFromState(inputConfigOrMountPoint = DEFAULT_REDUX_MOUNT_POINT, state) {
+export function getInputsFromState(inputConfigOrMountPoint = DEFAULT_REDUX_MOUNT_POINT, state, inputKeys) {
     const mountPoint = typeof inputConfigOrMountPoint === 'string' ? inputConfigOrMountPoint
         : getReduxMountPoint(inputConfigOrMountPoint);
 
     const inputsState = _property(mountPoint)(state);
     invariant(inputsState, `[redux-inputs]: no state found at '${mountPoint}', check your reducers to make sure it exists or change reduxMountPoint in your inputConfig.`);
-    return inputsState;
+
+    if (inputKeys) {
+        return _reduce(inputsState, (result, input, key) => {
+            if (inputKeys.includes(key)) {
+                result[key] = input;
+            }
+            return result;
+        }, {});
+    } else {
+        return inputsState;
+    }
 }
 
 export function inputsWithErrors(inputs) {
