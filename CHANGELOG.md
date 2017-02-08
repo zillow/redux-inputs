@@ -1,3 +1,7 @@
+# 2.2.0
+### Added
+- Added `inputKeys` parameter to selectors
+
 # 2.1.0
 ### Added
 - setErrors action creator
