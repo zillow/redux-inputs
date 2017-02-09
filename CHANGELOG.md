@@ -1,3 +1,7 @@
+# 2.2.1
+- connectWithInputs
+    - Extra props are no longer added when mapStateToProps or mapDispatchToProps are not defined.
+
 # 2.2.0
 ### Added
 - Added `inputKeys` parameter to selectors
