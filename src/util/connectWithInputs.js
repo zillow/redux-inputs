@@ -26,33 +26,34 @@ function applyMapDispatchToProps(mapDispatchToProps, dispatch, ownProps) {
  */
 export default (
     inputConfig,
-    mapReduxInputsToProps = reduxInputs => ({ reduxInputs }),
+    mapReduxInputsToProps,
     connect = _connect
 ) => {
+    const mapReduxInputsFn = mapReduxInputsToProps || (reduxInputs => ({ reduxInputs }));
     const inputActions = bindActions(inputConfig);
 
     return (
-        mapStateToProps = i => i,
-        mapDispatchToProps = dispatch => ({ dispatch }),
+        mapStateToProps,
+        mapDispatchToProps,
         mergeProps = (stateProps, dispatchProps, ownProps) => ({ ...stateProps, ...dispatchProps, ...ownProps }),
         connectOptions = {}
     ) => Component => connect(
         (state, ownProps) => ({
             _reduxInputsState: inputsSelector(inputConfig)(state), // Temporary prop to pass down to merge
             _reduxInputsForm: formSelector(inputConfig)(state),
-            ...mapStateToProps(state, ownProps)
+            ...(mapStateToProps && mapStateToProps(state, ownProps))
         }),
         (dispatch, ownProps) => ({
             _getInputProps: inputs => getInputProps(inputConfig, inputs, dispatch), // Temporary
             _reduxInputsActions: bindActionCreators(inputActions, dispatch),
-            ...applyMapDispatchToProps(mapDispatchToProps, dispatch, ownProps)
+            ...(mapDispatchToProps && applyMapDispatchToProps(mapDispatchToProps, dispatch, ownProps))
         }),
         (
             { _reduxInputsState, _reduxInputsForm, ...stateProps}, // stateProps
             { _getInputProps, _reduxInputsActions, ...dispatchProps }, // dispatchProps
             ownProps
         ) => ({
-            ...mapReduxInputsToProps({
+            ...mapReduxInputsFn({
                 ..._reduxInputsForm, // values, validating, pristine
                 ..._reduxInputsActions, // setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs
                 inputProps: _getInputProps(_reduxInputsState) // Use temporary props to create inputProps
