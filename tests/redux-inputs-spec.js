@@ -1067,6 +1067,42 @@ describe('connectWithInputs', () => {
         expect(finalProps.dispatch).to.not.exist;
         expect(finalProps.inputs).to.not.exist;
     });
+    it('ownProps are properly merged', () => {
+        const connectStub = sinon.stub();
+        const connectOutput = sinon.stub();
+
+        connectStub.returns(connectOutput);
+
+        connectWithInputs(
+            { email: {} },
+            undefined,
+            connectStub
+        )()(() => <div/>);
+
+        expect(connectStub.calledOnce).to.be.true;
+        const state = {
+            inputs: {
+                email: {
+                    value: 'test@test.com',
+                    pristine: true
+                }
+            }
+        };
+        const ownProps = { foo: 'bar' };
+        const store = mockStore(state);
+        const mapStateToProps = connectStub.args[0][0];
+        const mapDispatchToProps = connectStub.args[0][1];
+        const mergeProps = connectStub.args[0][2];
+
+        const stateProps = mapStateToProps(state, ownProps);
+        const dispatchProps = mapDispatchToProps(store.dispatch, ownProps);
+        const finalProps = mergeProps(stateProps, dispatchProps, ownProps);
+
+        expect(finalProps.reduxInputs).to.exist;
+        expect(finalProps.dispatch).to.not.exist;
+        expect(finalProps.inputs).to.not.exist;
+        expect(finalProps.foo).to.equal('bar');
+    });
     it('inputActions are bound and working', () => {
         const connectStub = sinon.stub();
         const connectOutput = sinon.stub();
