@@ -26,9 +26,10 @@ function applyMapDispatchToProps(mapDispatchToProps, dispatch, ownProps) {
  */
 export default (
     inputConfig,
-    mapReduxInputsToProps = reduxInputs => ({ reduxInputs }),
+    mapReduxInputsToProps,
     connect = _connect
 ) => {
+    const mapReduxInputsFn = mapReduxInputsToProps || (reduxInputs => ({ reduxInputs }));
     const inputActions = bindActions(inputConfig);
 
     return (
@@ -52,7 +53,7 @@ export default (
             { _getInputProps, _reduxInputsActions, ...dispatchProps }, // dispatchProps
             ownProps
         ) => ({
-            ...mapReduxInputsToProps({
+            ...mapReduxInputsFn({
                 ..._reduxInputsForm, // values, validating, pristine
                 ..._reduxInputsActions, // setInputs, updateAndValidate, validateInputs, resetInputs, initializeInputs
                 inputProps: _getInputProps(_reduxInputsState) // Use temporary props to create inputProps
