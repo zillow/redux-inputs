@@ -34,7 +34,7 @@ export default (
 
     return (
         mapStateToProps,
-        mapDispatchToProps,
+        mapDispatchToProps = dispatch => ({ dispatch }),
         mergeProps = (stateProps, dispatchProps, ownProps) => ({ ...stateProps, ...dispatchProps, ...ownProps }),
         connectOptions = {}
     ) => Component => connect(

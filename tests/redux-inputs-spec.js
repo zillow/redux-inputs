@@ -972,7 +972,7 @@ describe('connectWithInputs', () => {
         expect(finalProps.reduxInputs.validating).to.be.false;
         expect(finalProps.reduxInputs.pristine).to.be.true;
         expect(finalProps.reduxInputs.valid).to.be.true;
-        expect(finalProps.dispatch).to.not.exist;
+        expect(finalProps.dispatch).to.exist;
         expect(finalProps.inputs).to.deep.equal({
             email: { value: 'test@test.com', pristine: true }
         });
@@ -1064,7 +1064,7 @@ describe('connectWithInputs', () => {
         const finalProps = mergeProps(stateProps, dispatchProps, ownProps);
 
         expect(finalProps.reduxInputs).to.exist;
-        expect(finalProps.dispatch).to.not.exist;
+        expect(finalProps.dispatch).to.exist;
         expect(finalProps.inputs).to.not.exist;
     });
     it('ownProps are properly merged', () => {
@@ -1099,7 +1099,7 @@ describe('connectWithInputs', () => {
         const finalProps = mergeProps(stateProps, dispatchProps, ownProps);
 
         expect(finalProps.reduxInputs).to.exist;
-        expect(finalProps.dispatch).to.not.exist;
+        expect(finalProps.dispatch).to.exist;
         expect(finalProps.inputs).to.not.exist;
         expect(finalProps.foo).to.equal('bar');
     });
