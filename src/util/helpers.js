@@ -2,6 +2,7 @@ import invariant from 'invariant';
 import _property from 'lodash/property';
 import _reduce from 'lodash/reduce';
 import _isEmpty from 'lodash/isEmpty';
+import _includes from 'lodash/includes';
 
 import { getReduxMountPoint, DEFAULT_REDUX_MOUNT_POINT } from './mountPoint';
 
@@ -14,7 +15,7 @@ export function getInputsFromState(inputConfigOrMountPoint = DEFAULT_REDUX_MOUNT
 
     if (inputKeys) {
         return _reduce(inputsState, (result, input, key) => {
-            if (inputKeys.includes(key)) {
+            if (_includes(inputKeys, key)) {
                 result[key] = input;
             }
             return result;
