@@ -1170,7 +1170,7 @@ describe('getInputProps', () => {
     const altMountInputConfig = { _reduxMountPoint: 'alt', email: {}};
     it('returns objects with _id set', () => {
         const actual = getInputProps(basicInputConfig, basicInputState, noop);
-        expect(actual.email._id).to.equal('inputs:email');
+        expect(actual.email._id).to.equal('inputs-email');
     });
     it('handles non-errored inputs', () => {
         const actual = getInputProps(basicInputConfig, basicInputState, noop);
@@ -1199,8 +1199,8 @@ describe('getInputProps', () => {
     });
     it('handles multiple objects', () => {
         const actual = getInputProps(multiInputConfig, multiInputState, noop);
-        expect(actual.email._id).to.equal('inputs:email');
-        expect(actual.name._id).to.equal('inputs:name');
+        expect(actual.email._id).to.equal('inputs-email');
+        expect(actual.name._id).to.equal('inputs-name');
     });
     it('throws an invariant error when ids are not present in state', () => {
         const actualFn = () => getInputProps(multiInputConfig, basicInputState, noop);
@@ -1208,7 +1208,7 @@ describe('getInputProps', () => {
     });
     it('works with alternative mount points', () => {
         const actual = getInputProps(altMountInputConfig, basicInputState, noop);
-        expect(actual.email._id).to.equal('alt:email');
+        expect(actual.email._id).to.equal('alt-email');
     });
 });
 const promiseThunk = () => Promise.resolve();
