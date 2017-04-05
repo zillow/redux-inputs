@@ -13,7 +13,10 @@ Used to create reducers for forms
 The higher-order component for wrapping your input components so they can be passed redux-inputs props from the connectWithInputs.
 
 ### [Action Creators](./actionCreators.md)
-All the actions available to modify the inputs 
+All the actions available to modify the inputs
+
+### [Selectors](./selectors.md)
+[Reselect](https://github.com/reactjs/reselect) selectors for computing derived data from the state
 
 ### [Redux State](./reduxState.md)
 This explains exactly how redux-inputs stores the state
