@@ -19,7 +19,7 @@ export default (inputConfig, inputsState, dispatch) => (
         const hasError = typeof error !== 'undefined';
 
         return {
-            _id: [getReduxMountPoint(inputConfig), id].join(':'),
+            _id: [getReduxMountPoint(inputConfig), id].join('-'),
             value: hasError ? error : value,
             error: hasError,
 
