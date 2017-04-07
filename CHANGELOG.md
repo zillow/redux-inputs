@@ -1,3 +1,6 @@
+# 2.3.0
+- Added LocalInputs component
+
 # 2.2.1
 - connectWithInputs
     - Extra props are no longer added when mapStateToProps or mapDispatchToProps are not defined.

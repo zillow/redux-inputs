@@ -1,6 +1,6 @@
 {
   "name": "redux-inputs",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "description": "Redux actions and reducers for managing and validating forms and inputs",
   "homepage": "https://github.com/zillow/redux-inputs",
   "repository": {
