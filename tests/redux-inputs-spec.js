@@ -10,7 +10,7 @@ import { DEFAULT_REDUX_MOUNT_POINT } from '../src/util/mountPoint';
 import getInputProps from '../src/util/getInputProps';
 import connectWithInputs from '../src/util/connectWithInputs';
 import { formSelector } from '../src/util/selectors';
-import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/util/ReduxInputsWrapper';
+import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/components/ReduxInputsWrapper';
 
 const mockStore = configureMockStore([reduxThunk]);
 
