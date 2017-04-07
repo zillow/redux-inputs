@@ -9,7 +9,6 @@ redux-inputs
 /**
  * Action Types
  * SET_INPUT - Called after input(s) are validated and set.
- * LOADING - Called when async starts/finishes with `force` boolean.
  */
 export { SET_INPUT } from './actions/actionTypes.js';
 
@@ -45,4 +44,5 @@ export {
 export { default as connectWithInputs } from './util/connectWithInputs';
 export { default as getInputProps } from './util/getInputProps';
 export { getInputsFromState, getReduxMountPoint } from './util/helpers';
-export { default as ReduxInputsWrapper } from './util/ReduxInputsWrapper';
+export { default as ReduxInputsWrapper } from './components/ReduxInputsWrapper';
+export { default as LocalInputs } from './components/LocalInputs';

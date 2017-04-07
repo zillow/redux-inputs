@@ -17,3 +17,6 @@ All the actions available to modify the inputs
 
 ### [Redux State](./reduxState.md)
 This explains exactly how redux-inputs stores the state
+
+### [LocalInputs](./LocalInputs..md)
+A Component that provides a quick way to set up and use redux-inputs locally 
