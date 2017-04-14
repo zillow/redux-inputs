@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import _identity from 'lodash/identity';
 import getDisplayName from 'react-display-name';
 
@@ -60,39 +61,39 @@ const ReduxInputsWrapper = (WrappedComponent, options = {
         /**
          * Generated id from getInputProps (mountPoint:key)
          */
-        _id: React.PropTypes.string.isRequired,
+        _id: PropTypes.string.isRequired,
         /**
          * Optional override id if you don't want to use default _id from inputConfig key
          */
-        id: React.PropTypes.string,
+        id: PropTypes.string,
         /**
          * The logical value of the input from the redux store
          */
-        value: React.PropTypes.any,
+        value: PropTypes.any,
         /**
          * Function to create a value from a change event into a value to store
          */
-        parser: React.PropTypes.func,
+        parser: PropTypes.func,
         /**
          * Function to create a DOM-appropriate string from a value
          */
-        formatter: React.PropTypes.func,
+        formatter: PropTypes.func,
         /**
          * Private function from getInputProps, returns a promise
          */
-        dispatchChange: React.PropTypes.func.isRequired,
+        dispatchChange: PropTypes.func.isRequired,
         /**
          * Callback for React's native onChange
          */
-        onChange: React.PropTypes.func,
+        onChange: PropTypes.func,
         /**
          * Callback after successful validation and update
          */
-        onValidationSuccess: React.PropTypes.func,
+        onValidationSuccess: PropTypes.func,
         /**
          * Callback after failed validation
          */
-        onValidationFail: React.PropTypes.func
+        onValidationFail: PropTypes.func
     };
     return Wrapper;
 };

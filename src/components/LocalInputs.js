@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import thunk from 'redux-thunk';
 import { createInputsReducer } from '../reducers';
@@ -31,6 +32,6 @@ export default class LocalInputs extends React.Component {
 }
 
 LocalInputs.propTypes = {
-    inputsConfig: React.PropTypes.object.isRequired,
-    children: React.PropTypes.func.isRequired // Callback with reduxInputs props
+    inputsConfig: PropTypes.object.isRequired,
+    children: PropTypes.func.isRequired // Callback with reduxInputs props
 };
