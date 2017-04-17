@@ -1,4 +1,4 @@
-#API
+# API
 
 ### [inputsConfig:Object](./inputsConfig.md)
 An object you create for each form and pass to the `createInputsReducer` and `connectWithInputs` 
