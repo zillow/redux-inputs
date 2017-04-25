@@ -37,9 +37,9 @@
     "lodash": "^4.5.1",
     "prop-types": "^15.5.8",
     "react-display-name": "^0.2.0",
-    "react-redux": "^4.4.5",
+    "react-redux": "^4.4.5 || ^5.0.0",
     "redux": "^3.5.2",
-    "reselect": "^2.5.4"
+    "reselect": "^3.0.0"
   },
   "devDependencies": {
     "babel-loader": "^6.2.5",
@@ -59,10 +59,8 @@
     "mocha": "^2.3.4",
     "react": "^15.3.1",
     "react-dom": "^15.3.1",
-    "redux": "^3.0.0",
     "redux-mock-store": "^1.2.0",
     "redux-thunk": "^2.1.0",
-    "reselect": "^2.5.4",
     "sinon": "^1.17.4",
     "webpack": "^1.13.1"
   },
