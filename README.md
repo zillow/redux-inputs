@@ -15,7 +15,7 @@
 - Custom input components
 - Programatic value collection
 - Programatic value initialization
-- Progamatic value modification
+- Programatic value modification
 - Programatic input reset
 
 
