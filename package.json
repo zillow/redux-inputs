@@ -65,7 +65,7 @@
     "webpack": "^1.13.1"
   },
   "peerDependencies": {
-    "react": "^0.14.0 || ^15.0.0-0",
+    "react": ">=0.14.0",
     "redux-thunk": "^2.0.0"
   }
 }
