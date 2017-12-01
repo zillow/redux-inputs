@@ -186,7 +186,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                     validating: currentlyValidating || (hasAsync && !unchanged) // Will be validating if async validator exists
                 }) : ({ // False returned, input invalid
                     value: prev,
-                    error: value || '',
+                    error: typeof value === 'undefined' ? '' : value,
                     validating: false
                 });
 
