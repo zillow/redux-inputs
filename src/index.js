@@ -43,6 +43,7 @@ export {
  */
 export { default as connectWithInputs } from './util/connectWithInputs';
 export { default as getInputProps } from './util/getInputProps';
-export { getInputsFromState, getReduxMountPoint } from './util/helpers';
+export { getInputsFromState } from './util/helpers';
+export { getReduxMountPoint } from './util/mountPoint';
 export { default as ReduxInputsWrapper } from './components/ReduxInputsWrapper';
 export { default as LocalInputs } from './components/LocalInputs';
