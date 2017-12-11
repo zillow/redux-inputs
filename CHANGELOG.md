@@ -1,3 +1,10 @@
+# 2.5.2
+- Bug fixes
+
+# 2.5.0
+- npm v5
+- updated dependencies
+
 # 2.3.0
 - Added LocalInputs component
 
