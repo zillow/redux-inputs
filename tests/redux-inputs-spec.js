@@ -11,8 +11,18 @@ import getInputProps from '../src/util/getInputProps';
 import connectWithInputs from '../src/util/connectWithInputs';
 import { formSelector } from '../src/util/selectors';
 import ReduxInputsWrapper, { createOnChangeWithTransform } from '../src/components/ReduxInputsWrapper';
+import * as reduxInputsExports from '../src/index';
 
 const mockStore = configureMockStore([reduxThunk]);
+
+describe('exports', () => {
+    it('are all defined', () => {
+        Object.keys(reduxInputsExports).forEach(key => {
+            expect(key).to.not.be.undefined;
+            expect(reduxInputsExports[key], `export '${key}' is undefined`).to.not.be.undefined;
+        });
+    });
+});
 
 describe('createInputsReducer', () => {
     describe('no input config', () => {
