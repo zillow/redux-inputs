@@ -140,7 +140,7 @@ export function setErrors(inputsConfig, inputKeys = [], meta = {}) {
             const input = _pick(inputsState[key], ['value', 'validating']);
             result[key] = {
                 ...input,
-                error: inputsState[key].value || ''
+                error: typeof inputsState[key].value === 'undefined' ? '' : inputsState[key].value
             };
             return result;
         }, {});
@@ -211,7 +211,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                         // Failed validation
                         errorText => dispatchAndReturnPromiseResult({
                             value: prev,
-                            error: value || '',
+                            error: typeof value === 'undefined' ? '' : value,
                             ...(typeof errorText === 'string' ? { errorText } : {})
                         })
                     );
