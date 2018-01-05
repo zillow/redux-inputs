@@ -30,6 +30,35 @@ function _filterUnknownInputs(inputConfig, inputs) {
     }, {});
 }
 
+/**
+ * Normalize an input state object removing unnecessary properties
+ *
+ * @private
+ * @param input {Object}
+ * @returns {Object}
+ */
+function _normalizeInput(input) {
+    const normalized = { ...input };
+
+    // Remove validating key if falsey
+    if (!normalized.validating) {
+        delete normalized.validating;
+    }
+
+    return normalized;
+}
+
+/**
+ * Normalize all input states
+ *
+ * @private
+ * @param inputs {Object}
+ * @return {Object}
+ */
+function _normalizeInputs(inputs) {
+    return _mapValues(inputs, _normalizeInput);
+}
+
 export function _setInputs(inputConfig, update, meta = {}) {
     return {
         type: SET_INPUT,
@@ -66,13 +95,14 @@ function _fireChanges(inputConfig, update, inputsState, state, dispatch) {
 export function setInputs(inputConfig, update, meta = {}) {
     return (dispatch, getState) => {
         const filteredUpdate = _filterUnknownInputs(inputConfig, update);
-        dispatch(_setInputs(inputConfig, filteredUpdate, meta));
+        const normalizedUpdate = _normalizeInputs(filteredUpdate);
+        dispatch(_setInputs(inputConfig, normalizedUpdate, meta));
         if (!meta.suppressChange) {
             const state = getState();
             const inputsState = getInputsFromState(inputConfig, state);
-            _fireChanges(inputConfig, filteredUpdate, inputsState, state, dispatch);
+            _fireChanges(inputConfig, normalizedUpdate, inputsState, state, dispatch);
         }
-        return Promise.resolve(filteredUpdate);
+        return Promise.resolve(normalizedUpdate);
     };
 }
 
@@ -161,10 +191,10 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
         const inputsState = getInputsFromState(inputConfig, state);
         const promises = [];
 
-        const createNewState = newInputState => meta.initialize ? ({
+        const createNewState = newInputState => _normalizeInput(meta.initialize ? ({
             pristine: true,
             ...newInputState
-        }) : newInputState;
+        }) : newInputState);
 
 
         const changes = _reduce(inputs, (result, value, key) => {
@@ -197,8 +227,11 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
 
                 const newState = createNewState(change);
 
-                // Only fire setInputs on state that is different than current
-                if (!_isEqual(newState, inputsState[key])) {
+                // Only fire setInputs on state that is different than current.
+                // If the only difference in state is that pristine is missing from
+                // the new state, then we should still consider this pristine.
+                if (!_isEqual(newState, inputsState[key]) &&
+                    !_isEqual({ ...newState, pristine: true }, inputsState[key])) {
                     result[key] = newState;
                 }
 
@@ -221,8 +254,8 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
                 }
             } else {
                 log.error(`
-                Value returned from validator must be a 
-                boolean representing valid/invalid, a string representing errorText, or a promise for performing async 
+                Value returned from validator must be a
+                boolean representing valid/invalid, a string representing errorText, or a promise for performing async
                 validation. Got ${typeof validationResult} instead.
             `);
             }

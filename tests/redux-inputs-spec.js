@@ -356,7 +356,7 @@ describe('updateAndValidate thunk', () => {
     it('correctly dispatches client side validation changes when valid', () => {
         const expectedActions = [{
             type: SET_INPUT,
-            payload: { email: { value: 'test@test.com', validating: false } },
+            payload: { email: { value: 'test@test.com' } },
             error: false,
             meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
         }];
@@ -375,7 +375,7 @@ describe('updateAndValidate thunk', () => {
     });
     it('should not fire unnecessary setInputs', () => {
         const expectedActions = [];
-        const store = mockStore({ inputs: { email: { value: 'test@test.com', validating: false } } });
+        const store = mockStore({ inputs: { email: { value: 'test@test.com' } } });
         const thunk = updateAndValidate({
             email: {
                 validator: value => (value && value.length > 0)
@@ -388,13 +388,23 @@ describe('updateAndValidate thunk', () => {
             expect(store.getActions()).to.deep.equal(expectedActions);
         });
     });
+    it('should not remove pristine if nothing changes', () => {
+        const expectedActions = [];
+        const store = mockStore({ inputs: { email: { value: 'test@test.com', pristine: true } } });
+        const thunk = updateAndValidate({
+            email: {
+                validator: () => Promise.resolve()
+            }
+        }, {
+            email: 'test@test.com'
+        });
+
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
+    });
     it('should not fire unnecessary async validation', () => {
-        const expectedActions = [{
-            type: SET_INPUT,
-            payload: { email: { value: 'test@test.com', validating: false } },
-            error: false,
-            meta: { reduxMountPoint: DEFAULT_REDUX_MOUNT_POINT }
-        }];
+        const expectedActions = [];
         const store = mockStore({ inputs: { email: { value: 'test@test.com' } } });
         const thunk = updateAndValidate({
             email: {
@@ -450,7 +460,7 @@ describe('updateAndValidate thunk', () => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
                 payload: {
-                    email: { value: 'previous', error: 'test', validating: false }
+                    email: { value: 'previous', error: 'test' }
                 },
                 error: true,
                 meta: { reduxMountPoint: 'inputs' }
@@ -486,7 +496,6 @@ describe('updateAndValidate thunk', () => {
                     email: {
                         error: 'test',
                         errorText: 'Too short!',
-                        validating: false,
                         value: 'previous'
                     }
                 },
@@ -515,7 +524,7 @@ describe('updateAndValidate thunk', () => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
                 payload: {
-                    email: { value: 'test@test.com', error: '', validating: false }
+                    email: { value: 'test@test.com', error: '' }
                 },
                 error: true,
                 meta: { reduxMountPoint: 'page.inputs' }
@@ -637,7 +646,7 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: 'inputs' },
             payload: {
                 email: { validating: true, value: 'test@test.com' },
-                name: { validating: false, value: 'Bob' }
+                name: { value: 'Bob' }
             },
             type: 'RI_SET_INPUT'
         }, {
@@ -663,7 +672,7 @@ describe('updateAndValidate thunk', () => {
             expect(store.getActions()).to.deep.equal(expectedActions);
             expect(changed).to.deep.equal({
                 email: { value: 'test@test.com' },
-                name: { value: 'Bob', validating: false }
+                name: { value: 'Bob' }
             });
         });
     });
@@ -673,7 +682,7 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: 'inputs' },
             payload: {
                 email: { validating: true, value: 'test@test.com' },
-                name: { validating: false, error: 'Jo', value: undefined }
+                name: { error: 'Jo', value: undefined }
             },
             type: 'RI_SET_INPUT'
         }, {
@@ -698,7 +707,7 @@ describe('updateAndValidate thunk', () => {
         return store.dispatch(thunk).then(null, (changed) => {
             expect(store.getActions()).to.deep.equal(expectedActions);
             expect(changed).to.deep.equal({
-                name: { error: 'Jo', validating: false, value: undefined }
+                name: { error: 'Jo', value: undefined }
             });
         });
     });
@@ -708,7 +717,7 @@ describe('updateAndValidate thunk', () => {
             meta: { reduxMountPoint: 'inputs' },
             payload: {
                 email: { validating: true, value: 'test@test.com' },
-                name: { validating: false, value: 'Bob' }
+                name: { value: 'Bob' }
             },
             type: 'RI_SET_INPUT'
         }, {
@@ -787,8 +796,7 @@ describe('updateAndValidate thunk', () => {
             payload: {
                 email: {
                     error: 'te',
-                    value: 'storevalue',
-                    validating: false
+                    value: 'storevalue'
                 }
             },
             error: true,
@@ -829,13 +837,13 @@ describe('validateInputs thunk', () => {
         thunk((action) => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
-                payload: { email: { value: 'valid', validating: false } },
+                payload: { email: { value: 'valid' } },
                 error: false,
                 meta: { reduxMountPoint: 'inputs', validate: true }
             });
         }, () => ({ inputs: { email: { value: 'valid' } } }) /* getState */).then((results) => {
             expect(results).to.deep.equal({
-                email: { value: 'valid', validating: false }
+                email: { value: 'valid' }
             });
         });
     });
@@ -849,14 +857,14 @@ describe('validateInputs thunk', () => {
         thunk((action) => { // Dispatch
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
-                payload: { email: { value: undefined, error: '', validating: false } },
+                payload: { email: { value: undefined, error: '' } },
                 error: true,
                 meta: { reduxMountPoint: 'inputs', validate: true }
             });
         }, () => ({ inputs: { email: { value: undefined } } }) /* getState */).then(null, (erroredInputs) => {
             // Reject
             expect(erroredInputs).to.equal({
-                email: { value: undefined, error: '', validating: false }
+                email: { value: undefined, error: '' }
             });
         });
     });
@@ -924,13 +932,13 @@ describe('initializeInputs thunk', () => {
         thunk((action) => {
             expect(action).to.deep.equal({
                 type: 'RI_SET_INPUT',
-                payload: { email: { value: 'test@test.com', validating: false, pristine: true } },
+                payload: { email: { value: 'test@test.com', pristine: true } },
                 error: false,
                 meta: { reduxMountPoint: 'inputs', initialize: true }
             });
         }, () => ({ inputs: { email: { value: 'valid' } } }) /* getState */).then((results) => {
             expect(results).to.deep.equal({
-                email: { value: 'test@test.com', validating: false, pristine: true }
+                email: { value: 'test@test.com', pristine: true }
             });
         });
     });
@@ -990,16 +998,14 @@ describe('connectWithInputs', () => {
         return finalProps.reduxInputs.inputProps.email.dispatchChange('new@test.com').then((inputs) => {
             expect(inputs).to.deep.equal({
                 email: {
-                    value: 'new@test.com',
-                    validating: false
+                    value: 'new@test.com'
                 }
             });
             expect(store.getActions()).to.deep.equal([{
                 type: SET_INPUT,
                 payload: {
                     email: {
-                        value: 'new@test.com',
-                        validating: false
+                        value: 'new@test.com'
                     }
                 },
                 error: false,
@@ -1149,16 +1155,14 @@ describe('connectWithInputs', () => {
         return finalProps.reduxInputs.updateAndValidate({ email: 'new@test.com' }).then((inputs) => {
             expect(inputs).to.deep.equal({
                 email: {
-                    value: 'new@test.com',
-                    validating: false
+                    value: 'new@test.com'
                 }
             });
             expect(store.getActions()).to.deep.equal([{
                 type: SET_INPUT,
                 payload: {
                     email: {
-                        value: 'new@test.com',
-                        validating: false
+                        value: 'new@test.com'
                     }
                 },
                 error: false,
