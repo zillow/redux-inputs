@@ -89,6 +89,7 @@ Returns an action that when dispatched will reset the form values associated wit
 ### Note on `meta` parameter - There are some special properties available:
  - `reduxMountPoint` - automatically added to every action fired, specifying which form it is associated with 
  - `suppressChange` - adding this to the meta object for any action creator will skip any `onChange` callbacks in the inputsConfig
+ - `forceAsyncValidation` - adding this to the meta object for `validateInputs` and `updateAndValidate` will force async validation even if the value is unchanged
  - `validate` - included when running `validateInputs`
  - `initialize` - included when running `intializeInputs`, sets all changed inputs to `pristine`
  - `reset` - included when running `resetInputs`
