@@ -213,7 +213,7 @@ export function updateAndValidate(inputConfig, update, meta = {}) {
             if (typeof validationResult === 'boolean' || typeof validationResult === 'string' || hasAsync || !validationResult) { // Or Promise
                 const change = (validationResult === true || hasAsync) ? ({ // True or hasAsync, set value
                     value: value,
-                    validating: currentlyValidating || (hasAsync && !unchanged) // Will be validating if async validator exists
+                    validating: currentlyValidating || (hasAsync && !unchanged) || (hasAsync && meta.forceAsyncValidation) // Will be validating if async validator exists
                 }) : ({ // False returned, input invalid
                     value: prev,
                     error: typeof value === 'undefined' ? '' : value,

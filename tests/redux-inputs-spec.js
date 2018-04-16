@@ -538,6 +538,34 @@ describe('updateAndValidate thunk', () => {
             }
         }));
     });
+    it('correctly fires async validation when input is unchanged if forceAsyncValidation meta is present', () => {
+        const expectedActions = [{
+            error: false,
+            meta: { reduxMountPoint: 'inputs', forceAsyncValidation: true },
+            payload: { email: { validating: true, value: 'test@test.com' }},
+            type: 'RI_SET_INPUT'
+        }, {
+            error: false,
+            meta: { reduxMountPoint: 'inputs', forceAsyncValidation: true },
+            payload: { email: { value: 'test@test.com' }},
+            type: 'RI_SET_INPUT'
+        }];
+        const store = mockStore({ inputs: { email: { value: 'test@test.com' } } });
+        const thunk = updateAndValidate({
+            email: {
+                validator: () => Promise.resolve()
+            }
+        }, {
+            email: 'test@test.com'
+        },
+        {
+            forceAsyncValidation: true
+        });
+
+        return store.dispatch(thunk).then(() => {
+            expect(store.getActions()).to.deep.equal(expectedActions);
+        });
+    });
     it('correctly dispatches async validation VALID changes', () => {
         const expectedActions = [{
             error: false,
