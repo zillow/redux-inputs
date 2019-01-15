@@ -1,3 +1,6 @@
+# 2.6.0
+- Provide esm build, upgrade to babel 7
+
 # 2.5.2
 - Bug fixes
 
