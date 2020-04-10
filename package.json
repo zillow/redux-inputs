@@ -47,7 +47,7 @@
     "react-display-name": "^0.2.0",
     "react-redux": "^4.4.5 || ^5.0.0",
     "redux": "^3.5.2",
-    "reselect": "^3.0.0"
+    "reselect": "^4.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
