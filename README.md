@@ -81,7 +81,9 @@ ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.g
 
 ### Build
 
-    gulp
+    npm i
+
+    npm run build
 
 ### Examples
 
@@ -89,5 +91,4 @@ ReactDOM.render(<Provider store={store}><FormContainer /></Provider>, document.g
 
 ### Tests
 
-    gulp eslint
     npm test
