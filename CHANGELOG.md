@@ -1,3 +1,10 @@
+# 2.7.0
+- Updated dependencies
+  - reselect@4
+  - Expanded range of react-redux to encompass ^7.1.0
+  - Expanded range of redux to encompass ^4.0.5
+- Improved babel/runtime output
+
 # 2.6.0
 - Provide esm build, upgrade to babel 7
 
@@ -50,4 +57,3 @@
 
 - connectWithInputs - new helper function that wraps react-redux's connect and passes down form state, inputProps,
     and pre-bound actions to connected components.
-
