@@ -49,8 +49,8 @@
     "reselect": "^4.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.9.0",
     "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
     "@babel/plugin-proposal-object-rest-spread": "^7.9.5",
     "@babel/plugin-transform-runtime": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
@@ -60,15 +60,15 @@
     "babel-loader": "^8.1.0",
     "browser-sync": "^2.26.7",
     "chai": "^4.2.0",
-    "eslint": "^4.19.1",
+    "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-react": "^7.19.0",
-    "jest": "^23.6.0",
-    "react": "^15.3.1",
-    "react-dom": "^15.3.1",
+    "jest": "^25.3.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "redux-mock-store": "^1.5.4",
     "redux-thunk": "^2.1.0",
-    "sinon": "^7.5.0",
+    "sinon": "^9.0.2",
     "webpack": "^4.42.1"
   },
   "peerDependencies": {
