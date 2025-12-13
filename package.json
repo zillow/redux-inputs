@@ -45,7 +45,7 @@
     "prop-types": "^15.7.2",
     "react-display-name": "^0.2.5",
     "react-redux": "^4.4.5 || ^5.1.1 || ^7.1.0",
-    "redux": "^3.5.2 || ^4.0.5",
+    "redux": "^4.2.1",
     "reselect": "^4.0.0"
   },
   "devDependencies": {
